@@ -6,8 +6,41 @@ using System.Text;
 
 namespace ProphetsWay.Utilities
 {
-	public class FileTools
+	public static class FileTools
 	{
+
+		public static void Move(this FileInfo fileInfo, string requestedFullName)
+		{
+			var newName = CheckAndRenameFile(requestedFullName);
+
+			try
+			{
+				Logger.Debug(string.Format("MOVING file [{0}] to location [{1}].", fileInfo.FullName, newName));
+				fileInfo.MoveTo(newName);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error(ex, string.Format("Unable to move file [{0}] to location [{1}]", fileInfo.FullName, newName));
+				throw;
+			}
+		}
+
+		public static void Copy(this FileInfo fileInfo, string requestedFullName)
+		{
+			var newName = CheckAndRenameFile(requestedFullName);
+
+			try
+			{
+				Logger.Debug(string.Format("COPYING file [{0}] to location [{1}].", fileInfo.FullName, newName));
+				fileInfo.CopyTo(newName);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error(ex, string.Format("Unable to move file [{0}] to location [{1}]", fileInfo.FullName, newName));
+				throw;
+			}
+		}
+
 		/// <summary>
 		/// Takes a requested file name, checks to see if it already exists, and if it does, 
 		/// appends " ~ " with a number behind until it finds a name that isn't taken.
@@ -19,8 +52,9 @@ namespace ProphetsWay.Utilities
 			var newFileName = requestedFileName;
 			var file = new FileInfo(requestedFileName);
 
-			//if (file.Directory != null && !file.Directory.Exists)
-			//    file.Directory.Create();
+			if (!Directory.Exists(file.DirectoryName) && file.DirectoryName != null)
+				Directory.CreateDirectory(file.DirectoryName);
+		
 
 			if (file.Exists)
 			{
