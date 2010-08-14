@@ -95,12 +95,30 @@ namespace ProphetsWay.Utilities
 		public FileDestination(string fileName, LogLevels level = LogLevels.Debug, bool clearFile = true)
 		{
 			_file = new FileInfo(fileName);
-
-			if (clearFile)
-				_file.Delete();
-
 			_logLevel = level;
-			_writer = _file.AppendText();
+
+			try
+			{
+				if (_file.Exists && !clearFile)
+				{
+					_writer = _file.AppendText();
+				}
+				else
+				{
+					if (_file.Exists)
+						_file.Delete();
+
+					if (_file.Directory != null && !_file.Directory.Exists)
+						_file.Directory.Create();
+
+					_writer = _file.CreateText();
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+				throw;
+			}
 		}
 
 		private readonly LogLevels _logLevel;
