@@ -1,15 +1,46 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace ProphetsWay.Utilities
 {
 	public static class FileTools
 	{
+		private const int READ_BUFFER_SIZE = 512 * 1024;
+		private const int WRITE_BUFFER_SIZE = 512 * 1024;
 
-		public static void Move(this FileInfo fileInfo, string requestedFullName)
+		public static void CopyFast(this FileInfo fileInfo, string requestedFullName)
+		{
+			try
+			{
+				Logger.Debug(string.Format("COPYING file [{0}] to location [{1}].", fileInfo.FullName, requestedFullName));
+
+				var buffer = new byte[READ_BUFFER_SIZE];
+				using (var outStream = File.OpenWrite(requestedFullName))
+				{
+					using (var inStream = fileInfo.OpenRead())
+					{
+						int bytesRead;
+						while ((bytesRead = inStream.Read(buffer, 0, READ_BUFFER_SIZE)) != 0)
+						{
+							var written = 0;
+							while(written < bytesRead)
+							{
+								var toWrite = Math.Min(WRITE_BUFFER_SIZE, bytesRead - written);
+								outStream.Write(buffer, written, toWrite);
+								written += toWrite;
+							}
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Error(ex, string.Format("Unable to move file [{0}] to location [{1}]", fileInfo.FullName, requestedFullName));
+				throw;
+			}
+		}
+		public static void MoveWithUniqueName(this FileInfo fileInfo, string requestedFullName)
 		{
 			var newName = CheckAndRenameFile(requestedFullName);
 
@@ -25,20 +56,10 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
-		public static void Copy(this FileInfo fileInfo, string requestedFullName)
+		public static void CopyWithUniqueName(this FileInfo fileInfo, string requestedFullName)
 		{
 			var newName = CheckAndRenameFile(requestedFullName);
-
-			try
-			{
-				Logger.Debug(string.Format("COPYING file [{0}] to location [{1}].", fileInfo.FullName, newName));
-				fileInfo.CopyTo(newName);
-			}
-			catch (Exception ex)
-			{
-				Logger.Error(ex, string.Format("Unable to move file [{0}] to location [{1}]", fileInfo.FullName, newName));
-				throw;
-			}
+			fileInfo.CopyFast(newName);
 		}
 
 		/// <summary>
