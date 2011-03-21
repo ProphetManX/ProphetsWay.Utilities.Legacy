@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BackgroundWorkingClass.cs" />
     <Compile Include="FileTools.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Parser.cs" />
