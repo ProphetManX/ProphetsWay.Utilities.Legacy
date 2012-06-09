@@ -1,7 +1,4 @@
-﻿
-
-
-using System;
+﻿using System;
 using System.Threading;
 
 namespace ProphetsWay.Utilities
@@ -19,10 +16,11 @@ namespace ProphetsWay.Utilities
 
 		public bool Working { get; protected set; }
 
-		protected void StartWork(object args = null)
+		public void StartWork(object args = null)
 		{
 			Logger.Info("Starting: " + _workName);
 			Working = true;
+			Cancel = false;
 
 			var th = new Thread(DoWork);
 			th.Start(args);
@@ -41,20 +39,25 @@ namespace ProphetsWay.Utilities
 
 		protected abstract void DoWork(object args);
 
-		public abstract event WorkFinished WorkFinished;
-		public virtual event ProgressUpdate ProgressUpdate;
-		public virtual event StatusUpdate StatusUpdate;
+		public EventHandler<WorkFinishedArgs> WorkFinished;
+		public EventHandler<WorkProgressArgs> ProgressUpdate;
+		public EventHandler<WorkStatusArgs> StatusUpdate;
 	}
 
-	public delegate void WorkFinished(object sender, WorkProgressArgs args);
+	public class WorkFinishedArgs : WorkProgressArgs
+	{
+		public WorkFinishedArgs(object output, string message = null, int progress = 100, int max = 100)
+			: base(progress, max, message)
+		{
+			Results = output;
+		}
 
-	public delegate void ProgressUpdate(object sender, WorkProgressArgs args);
+		public object Results { get; set; }
+	}
 
-	public delegate void StatusUpdate(object sender, WorkStatusArgs args);
-	
 	public class WorkProgressArgs : WorkStatusArgs
 	{
-		public WorkProgressArgs(int progress = 100, int max = 100)
+		public WorkProgressArgs(int progress = 100, int max = 100, string message = null) : base(message)
 		{
 			Progress = progress;
 			MaxProgress = max;
@@ -66,6 +69,11 @@ namespace ProphetsWay.Utilities
 
 	public class WorkStatusArgs :EventArgs
 	{
-		
+		public WorkStatusArgs(string message)
+		{
+			Message = message;
+		}
+
+		public string Message { get; private set; }
 	}
 }

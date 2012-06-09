@@ -108,7 +108,7 @@ namespace ProphetsWay.Utilities
 					if (_file.Exists)
 						_file.Delete();
 
-					if (_file.Directory != null && !_file.Directory.Exists)
+					if (!_file.Directory.Exists)
 						_file.Directory.Create();
 
 					_writer = _file.CreateText();

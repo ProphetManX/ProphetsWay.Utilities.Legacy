@@ -7,7 +7,6 @@ namespace ProphetsWay.Utilities
 {
 	public static class Parser
 	{
-
 		public static T GetValue<T>(this string input)
 		{
 			T retval;
