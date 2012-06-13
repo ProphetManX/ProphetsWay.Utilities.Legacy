@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.Utilities", "ProphetsWay.Utilities.csproj", "{7592B56D-F90B-41AC-95FA-EDFE66BD8B7F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.MyBatisTools", "..\ProphetsWay.MyBatisTools\ProphetsWay.MyBatisTools.csproj", "{642469A8-C0BA-49AF-AFA7-41FE5D0A12F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{7592B56D-F90B-41AC-95FA-EDFE66BD8B7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7592B56D-F90B-41AC-95FA-EDFE66BD8B7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7592B56D-F90B-41AC-95FA-EDFE66BD8B7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{642469A8-C0BA-49AF-AFA7-41FE5D0A12F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{642469A8-C0BA-49AF-AFA7-41FE5D0A12F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{642469A8-C0BA-49AF-AFA7-41FE5D0A12F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{642469A8-C0BA-49AF-AFA7-41FE5D0A12F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
