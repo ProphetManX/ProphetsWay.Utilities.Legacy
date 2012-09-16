@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Net;
@@ -11,23 +12,23 @@ namespace ProphetsWay.Utilities
 		{
 			T retval;
 
-			if (typeof (T).IsEnum)
+			if (typeof(T).IsEnum)
 			{
 				EnumTryParse(input, out retval);
 				return retval;
 			}
 
 			retval = default(T);
-			var cType = typeof (T);
+			var cType = typeof(T);
 			var objType = cType;
 
-			if (cType.IsGenericType && cType.GetGenericTypeDefinition().Equals(typeof (Nullable<>)))
+			if (cType.IsGenericType && cType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
 				objType = new NullableConverter(cType).UnderlyingType;
 
 			var obj = ParseStringAsType(input, cType);
 
 			if (obj != null)
-				retval = (T) Convert.ChangeType(obj, objType);
+				retval = (T)Convert.ChangeType(obj, objType);
 
 			return retval;
 		}
@@ -40,8 +41,8 @@ namespace ProphetsWay.Utilities
 			else
 			{
 				result = default(T);
-				foreach (var value in Enum.GetNames(typeof (T)).Where(value => value.Equals(typeFixed, StringComparison.OrdinalIgnoreCase)))
-					result = (T) Enum.Parse(typeof (T), value);
+				foreach (var value in Enum.GetNames(typeof(T)).Where(value => value.Equals(typeFixed, StringComparison.OrdinalIgnoreCase)))
+					result = (T)Enum.Parse(typeof(T), value);
 			}
 		}
 
@@ -147,5 +148,11 @@ namespace ProphetsWay.Utilities
 			return retval;
 		}
 
+		public static T GetValueFromKey<T>(this IDictionary<string, string> dictionary, string key)
+		{
+			return dictionary.ContainsKey(key)
+					? GetValue<T>(dictionary[key])
+					: default(T);
+		}
 	}
 }

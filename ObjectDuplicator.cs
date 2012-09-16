@@ -35,10 +35,5 @@ namespace ProphetsWay.Utilities
 			return copy;
 		}
 
-
-
-
-
-
 	}
 }

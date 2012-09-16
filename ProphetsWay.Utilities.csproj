@@ -44,6 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="WebTools\AjaxConstants.cs" />
+    <Compile Include="WebTools\BaseAjaxListener.cs" />
     <Compile Include="BackgroundWorkingClass.cs" />
     <Compile Include="FileTools.cs" />
     <Compile Include="FormTools.cs" />
@@ -52,6 +54,13 @@
     <Compile Include="ObjectDuplicator.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="..\Libraries\jquery\jquery-1.8.1.js">
+      <Link>jQuery Plugins\jquery-1.8.1.js</Link>
+    </Content>
+    <Content Include="WebTools\jQuery Plugins\jQuery.ProphetsWay.AjaxRequestor.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
