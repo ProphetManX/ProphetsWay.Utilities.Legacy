@@ -37,6 +37,10 @@
   <PropertyGroup />
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.ApplicationServices">
+      <HintPath>C:\Windows\Microsoft.NET\Framework\v4.0.30319\System.Web.ApplicationServices.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -44,8 +48,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="WebTools\AjaxConstants.cs" />
-    <Compile Include="WebTools\BaseAjaxListener.cs" />
     <Compile Include="BackgroundWorkingClass.cs" />
     <Compile Include="FileTools.cs" />
     <Compile Include="FormTools.cs" />
@@ -56,12 +58,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
-  <ItemGroup>
-    <Content Include="..\Libraries\jquery\jquery-1.8.1.js">
-      <Link>jQuery Plugins\jquery-1.8.1.js</Link>
-    </Content>
-    <Content Include="WebTools\jQuery Plugins\jQuery.ProphetsWay.AjaxRequestor.js" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
