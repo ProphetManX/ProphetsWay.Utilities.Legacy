@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 
@@ -8,6 +9,9 @@ namespace ProphetsWay.Utilities
 {
 	public static class Parser
 	{
+		/// <summary>
+		/// Converts the string value into a typed value
+		/// </summary>
 		public static T GetValue<T>(this string input)
 		{
 			T retval;
@@ -22,8 +26,10 @@ namespace ProphetsWay.Utilities
 			var cType = typeof(T);
 			var objType = cType;
 
+			// ReSharper disable PossibleNullReferenceException
 			if (cType.IsGenericType && cType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
 				objType = new NullableConverter(cType).UnderlyingType;
+			// ReSharper restore PossibleNullReferenceException
 
 			var obj = ParseStringAsType(input, cType);
 
@@ -41,8 +47,17 @@ namespace ProphetsWay.Utilities
 			else
 			{
 				result = default(T);
+				var found = false;
+
 				foreach (var value in Enum.GetNames(typeof(T)).Where(value => value.Equals(typeFixed, StringComparison.OrdinalIgnoreCase)))
+				{
 					result = (T)Enum.Parse(typeof(T), value);
+					found = true;
+				}
+
+				//I'm not sure if this is gonna be good in all circumstances, but we'll find out eventually...
+				if (!found)
+					result = (T)Enum.Parse(typeof(T), type);
 			}
 		}
 
@@ -64,8 +79,10 @@ namespace ProphetsWay.Utilities
 			bool b;
 			IPAddress ip;
 
+			// ReSharper disable PossibleNullReferenceException
 			if (conversionType.IsGenericType && conversionType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
 				objType = new NullableConverter(conversionType).UnderlyingType;
+			// ReSharper restore PossibleNullReferenceException
 
 			if (conversionType == typeof(DateTime?))
 				if (DateTime.TryParse(input, out dt))
@@ -148,11 +165,56 @@ namespace ProphetsWay.Utilities
 			return retval;
 		}
 
+		/// <summary>
+		/// Finds the value in a string dictionary, then converts that value into a typed value.
+		/// </summary>
 		public static T GetValueFromKey<T>(this IDictionary<string, string> dictionary, string key)
 		{
 			return dictionary.ContainsKey(key)
 					? GetValue<T>(dictionary[key])
 					: default(T);
+		}
+
+		/// <summary>
+		/// Takes a filename path, opens a CSV and returns the data as a list of dictionary entries, where the dictionary keys are the columns, and the value for each row is the dictionary value 
+		/// </summary>
+		public static List<Dictionary<string, string>> ReadCSVIntoMockTable(string csvPath)
+		{
+			var fileInfo = new FileInfo(csvPath);
+			var reader = fileInfo.OpenText();
+			var fileText = reader.ReadToEnd();
+			reader.Close();
+
+			var mockTable = new List<Dictionary<string, string>>();
+			var columnList = new List<string>();
+
+			var lines = fileText.Replace("\n", "").Split("\r".ToCharArray());
+
+			var firstLine = true;
+			foreach (var line in lines)
+			{
+				var columnContents = line.Split('\t');
+
+				//if first, do the header crawl)
+				if (firstLine)
+				{
+					columnList.AddRange(columnContents);
+
+					firstLine = false;
+					continue;
+				}
+
+				if (columnContents.Length < columnList.Count)
+					continue;
+
+				var currentRow = new Dictionary<string, string>();
+				for (var i = 0; i < columnList.Count; i++)
+					currentRow.Add(columnList[i], columnContents[i]);
+
+				mockTable.Add(currentRow);
+			}
+
+			return mockTable;
 		}
 	}
 }

@@ -73,7 +73,7 @@ namespace ProphetsWay.Utilities
 			var newFileName = requestedFileName;
 			var file = new FileInfo(requestedFileName);
 
-			if (!Directory.Exists(file.DirectoryName) && file.DirectoryName != null)
+			if (!Directory.Exists(file.DirectoryName))
 				Directory.CreateDirectory(file.DirectoryName);
 		
 

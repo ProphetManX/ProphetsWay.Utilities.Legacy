@@ -8,8 +8,6 @@ namespace ProphetsWay.Utilities
 		/// <summary>
 		/// Will duplicate any object, and any properties that are reference types will also be duplicated.  Will not copy Lists nicely?
 		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="original"></param>
 		/// <returns>Returns a copy of the input type.</returns>
 		public static T DuplicateObject<T>(this T original)
 		{
