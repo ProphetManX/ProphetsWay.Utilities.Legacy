@@ -36,6 +36,9 @@
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
+    <Reference Include="protobuf-net">
+      <HintPath>..\Libraries\protobuf-net r640\Full\net30\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Web.ApplicationServices">
