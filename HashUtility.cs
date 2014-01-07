@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 
 namespace ProphetsWay.Utilities
 {
-	public enum HashType
+	public enum HashTypes
 	{
 		MD5,
 		SHA1,
@@ -33,64 +33,170 @@ namespace ProphetsWay.Utilities
 	{
 		private const string INVALID_HASH_TYPE = @"Improper value of HashType was used.";
 
-		public static string GenerateHash(this Stream stream, HashType hashType)
+		public static HashCollection GenerateHashes(this Stream stream)
 		{
-			HashAlgorithm crypto;
-			byte[] hash;
+			var buffer = new byte[16 * 1024];
 
-			switch (hashType)
+			var md5Worker = new HashWorker(HashTypes.MD5);
+			var sha1Worker = new HashWorker(HashTypes.SHA1);
+			var sha256Worker = new HashWorker(HashTypes.SHA256);
+			var sha512Worker = new HashWorker(HashTypes.SHA512);
+
+
+			//event here to setup progressbar length
+
+			var max = (int)(stream.Length / buffer.Length);
+
+			while (stream.Read(buffer, 0, buffer.Length) > 0)
 			{
-				case HashType.MD5:
-					crypto = new MD5CryptoServiceProvider();
-					break;
-
-				case HashType.SHA1:
-					crypto = new SHA1Managed();
-					break;
-
-				case HashType.SHA256:
-					crypto = new SHA256Managed();
-					break;
-
-				case HashType.SHA512:
-					crypto = new SHA512Managed();
-					break;
-
-				default:
-					throw new InvalidEnumArgumentException(INVALID_HASH_TYPE);
+				
 			}
 
-			try
-			{
-				hash = crypto.ComputeHash(stream);
-			}
-			finally
-			{
-				if (stream != null)
-					stream.Close();
-			}
+			stream.Close();
 
-			return BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+
+			throw new NotImplementedException();
+		}
+
+		public static string GenerateHash(this Stream stream, HashTypes hashType)
+		{
+			//HashAlgorithm crypto;
+			//byte[] hash;
+
+			//switch (hashType)
+			//{
+			//	case HashType.MD5:
+			//		crypto = new MD5CryptoServiceProvider();
+			//		break;
+
+			//	case HashType.SHA1:
+			//		crypto = new SHA1Managed();
+			//		break;
+
+			//	case HashType.SHA256:
+			//		crypto = new SHA256Managed();
+			//		break;
+
+			//	case HashType.SHA512:
+			//		crypto = new SHA512Managed();
+			//		break;
+
+			//	default:
+			//		throw new InvalidEnumArgumentException(INVALID_HASH_TYPE);
+			//}
+
+			var worker = new HashWorker(hashType);
+			worker.GenerateHash(stream);
+
+			//try
+			//{
+			//	worker.Hash = worker.Hasher.ComputeHash(stream);
+			//	//hash = crypto.ComputeHash(stream);
+			//}
+			//catch (Exception ex)
+			//{
+			//	Logger.Error(ex, string.Format("Error when trying to compute a [{0}] hash on a Stream.", hashType));
+			//}
+			//finally
+			//{
+			//	if (stream != null)
+			//		stream.Close();
+			//}
+
+			return BitConverter.ToString(worker.Hash).Replace("-", "").ToLower();
 		}
 		
-		public static bool VerifyHash(this Stream stream, string hash, HashType hashType)
+		public static bool VerifyHash(this Stream stream, string hash, HashTypes hashType)
 		{
 			return string.Equals(hash, GenerateHash(stream, hashType));
 		}
 
-		public static bool VerifyHash(this FileInfo fileInfo, string hash, HashType hashType)
+		public static bool VerifyHash(this FileInfo fileInfo, string hash, HashTypes hashType)
 		{
 			return VerifyHash(fileInfo.OpenRead(), hash, hashType);
 		}
 
-		public static string GenerateHash(string fileName, HashType hashType)
+		public static string GenerateHash(string fileName, HashTypes hashType)
 		{
 			return GenerateHash(new FileInfo(fileName).OpenRead(), hashType);
 		}
 
-		public static string GenerateHash(this FileInfo fileInfo, HashType hashType)
+		public static string GenerateHash(this FileInfo fileInfo, HashTypes hashType)
 		{
 			return GenerateHash(fileInfo.OpenRead(), hashType);
+		}
+
+		
+	
+
+		private class HashWorker
+		{
+			public int Offset { get; set; }
+			public byte[] Hash
+			{
+				get
+				{
+					return Hasher.Hash;
+				}
+			}
+
+			private HashAlgorithm Hasher { get; set; }
+			private readonly HashTypes _hashType;
+
+			public HashWorker(HashTypes hashType)
+			{
+				_hashType = hashType;
+
+				switch (_hashType)
+				{
+					case HashTypes.MD5:
+						Hasher = new MD5CryptoServiceProvider();
+						break;
+
+					case HashTypes.SHA1:
+						Hasher = new SHA1Managed();
+						break;
+
+					case HashTypes.SHA256:
+						Hasher = new SHA256Managed();
+						break;
+
+					case HashTypes.SHA512:
+						Hasher = new SHA512Managed();
+						break;
+
+					default:
+						throw new InvalidEnumArgumentException(INVALID_HASH_TYPE);
+				}
+			}
+
+			public void GenerateHash(Stream stream)
+			{
+				try
+				{
+					Hasher.ComputeHash(stream);
+				}
+				catch (Exception ex)
+				{
+					Logger.Error(ex, string.Format("Error when trying to compute a [{0}] hash on a Stream.", _hashType));
+				}
+				finally
+				{
+					if (stream != null)
+						stream.Close();
+				}
+			}
+
+			public int GenerateIncrementalHash(byte[] inputBuffer, int inputOffset, int inputCount, bool final = false)
+			{
+				if (final)
+					return Hasher.TransformBlock(inputBuffer, 0, inputBuffer.Length, inputBuffer, 0);
+				else
+					Hasher.TransformFinalBlock(inputBuffer, 0, inputBuffer.Length);
+				
+				return 0;
+			}
 		}
 	}
 }
