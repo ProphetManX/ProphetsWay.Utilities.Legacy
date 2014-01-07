@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
 
@@ -14,7 +16,7 @@ namespace ProphetsWay.Utilities
 		Debug = 15
 	}
 
-	public static class Logger
+	public static class Logger  
 	{
 		private static IList<LoggingDestination> _destinations;
 		private static IList<LoggingDestination> LoggingDestinations
@@ -39,7 +41,7 @@ namespace ProphetsWay.Utilities
 
 		public static void Debug(string message)
 		{
-			Log(string.Format("{0}{1}","DEBUG:  ".PadLeft(15), message), LogLevels.Debug);
+			Log(string.Format("{0}{1}", "DEBUG:  ".PadLeft(15), message), LogLevels.Debug);
 		}
 
 		public static void Error(Exception ex, string generalMessage = "")
@@ -52,50 +54,56 @@ namespace ProphetsWay.Utilities
 			if (ex == null)
 				Log(string.Format("{0}{1}", "WARNING:  ".PadLeft(15), message), LogLevels.Warning);
 			else
-				Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace),
-				    LogLevels.Error);
+				Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace), LogLevels.Error);
 		}
 
 		private static void Log(string message, LogLevels level)
 		{
-			var formattedMessage = string.Format("{0} :: {1}",DateTime.Now, message);
+			var formattedMessage = string.Format("{0} :: {1}", DateTime.Now, message);
+
+			if (LoggingDestinations.Count == 0)
+				AddDestination(new EventLogDestination());
 
 			foreach (var dest in LoggingDestinations)
-			{
 				dest.Log(formattedMessage, level);
-			}
 		}
 	}
 
 	public abstract class LoggingDestination
 	{
-		public abstract void Log(string message, LogLevels level);
+		private readonly LogLevels _reportingLevel;
+
+		public LoggingDestination(LogLevels reportingLevel)
+		{
+			_reportingLevel = reportingLevel;
+		}
+
+		public void Log(string message, LogLevels level)
+		{
+			if ((level & _reportingLevel) < level)
+				return;
+
+			LogStatement(message, level);
+		}
+
+		protected abstract void LogStatement(string message, LogLevels level);
 	}
 
 	public class ConsoleDestination : LoggingDestination
 	{
-		public ConsoleDestination(LogLevels level = LogLevels.Debug)
+		public ConsoleDestination(LogLevels level = LogLevels.Debug) : base(level) { }
+
+		protected override void LogStatement(string message, LogLevels level)
 		{
-			_logLevel = level;
-		}
-
-		private readonly LogLevels _logLevel;
-
-		public override void Log(string message, LogLevels level)
-		{
-			if ((level & _logLevel) < level)
-				return;
-
 			Console.WriteLine(message);
 		}
 	}
 
 	public class FileDestination : LoggingDestination
 	{
-		public FileDestination(string fileName, LogLevels level = LogLevels.Debug, bool clearFile = true)
+		public FileDestination(string fileName, LogLevels level = LogLevels.Debug, bool clearFile = true):base(level)
 		{
 			_file = new FileInfo(fileName);
-			_logLevel = level;
 
 			try
 			{
@@ -121,18 +129,69 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
-		private readonly LogLevels _logLevel;
 		private readonly FileInfo _file;
 		private readonly StreamWriter _writer;
 
-		public override void Log(string message, LogLevels level)
+		protected override void LogStatement(string message, LogLevels level)
 		{
-			if ((level & _logLevel) < level)
-				return;
-
 			_writer.WriteLine(message);
 			_writer.Flush();
 		}
 
+	}
+
+	public class EventLogDestination : LoggingDestination
+	{
+		private readonly string _source;
+		private const string _log = "Application";
+
+		public EventLogDestination() : this(null, LogLevels.Debug) { }
+		public EventLogDestination(LogLevels logLevel) : this(null, logLevel) { }
+		public EventLogDestination(string applicationName) : this(applicationName, LogLevels.Debug) { }
+
+		public EventLogDestination(string applicationName, LogLevels logLevel)
+			: base(logLevel)
+		{
+			if (string.IsNullOrEmpty(applicationName))
+			{
+				var a = Assembly.GetEntryAssembly();
+				if (a != null)
+					applicationName = a.GetName().Name;
+				else
+					applicationName = "Anonomous Application";
+
+			}
+
+			_source = applicationName.Replace(" ", "");
+
+			if (!EventLog.SourceExists(_source))
+				EventLog.CreateEventSource(_source, _log);
+		}
+
+		protected override void LogStatement(string message, LogLevels level)
+		{
+			EventLogEntryType type;
+
+			switch (level)
+			{
+				case LogLevels.Debug:
+				case LogLevels.Information:
+					type = EventLogEntryType.Information;
+					break;
+
+				case LogLevels.Warning:
+					type = EventLogEntryType.Warning;
+					break;
+
+				case LogLevels.Error:
+					type = EventLogEntryType.Error;
+					break;
+
+				default:
+					return;
+			}
+
+			EventLog.WriteEntry(_source, message, type);
+		}
 	}
 }
