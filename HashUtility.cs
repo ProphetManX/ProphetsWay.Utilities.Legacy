@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.VisualBasic.Devices;
 using System.ComponentModel;
 using System.IO;
 using System.Security.Cryptography;
@@ -15,12 +16,12 @@ namespace ProphetsWay.Utilities
 
 	public class HashCollection
 	{
-		public HashCollection(string md5, string sha1, string sha256, string sha512)
+		public HashCollection(byte[] md5, byte[] sha1, byte[] sha256, byte[] sha512)
 		{
-			MD5 = md5;
-			SHA1 = sha1;
-			SHA256 = sha256;
-			SHA512 = sha512;
+			MD5 = BitConverter.ToString(md5).Replace("-", "").ToLower();
+			SHA1 = BitConverter.ToString(sha1).Replace("-", "").ToLower();
+			SHA256 = BitConverter.ToString(sha256).Replace("-", "").ToLower();
+			SHA512 = BitConverter.ToString(sha512).Replace("-", "").ToLower();
 		}
 
 		public string SHA1 { get; private set; }
@@ -35,7 +36,7 @@ namespace ProphetsWay.Utilities
 
 		public static HashCollection GenerateHashes(this Stream stream)
 		{
-			var buffer = new byte[16 * 1024];
+			var buffer = new byte[32 * 1024 * 1024];
 
 			var md5Worker = new HashWorker(HashTypes.MD5);
 			var sha1Worker = new HashWorker(HashTypes.SHA1);
@@ -47,16 +48,36 @@ namespace ProphetsWay.Utilities
 
 			var max = (int)(stream.Length / buffer.Length);
 
-			while (stream.Read(buffer, 0, buffer.Length) > 0)
+			var x = new ComputerInfo();
+			var y = x.TotalPhysicalMemory;
+			int bufferLength;
+
+			bufferLength = stream.Read(buffer, 0, buffer.Length);
+			max--;
+
+			while (bufferLength > 0)
 			{
-				
+				//process the buffer here...
+				md5Worker.GenerateIncrementalHash(buffer, bufferLength);
+				sha1Worker.GenerateIncrementalHash(buffer, bufferLength);
+				sha256Worker.GenerateIncrementalHash(buffer, bufferLength);
+				sha512Worker.GenerateIncrementalHash(buffer, bufferLength);
+
+				bufferLength = stream.Read(buffer, 0, buffer.Length);
+				max--;
 			}
+
+			md5Worker.GenerateIncrementalHash(buffer, bufferLength, true);
+			sha1Worker.GenerateIncrementalHash(buffer, bufferLength, true);
+			sha256Worker.GenerateIncrementalHash(buffer, bufferLength, true);
+			sha512Worker.GenerateIncrementalHash(buffer, bufferLength, true);
 
 			stream.Close();
 
 
 
-			throw new NotImplementedException();
+			var ret = new HashCollection(md5Worker.Hash, sha1Worker.Hash, sha256Worker.Hash, sha512Worker.Hash);
+			return ret;
 		}
 
 		public static string GenerateHash(this Stream stream, HashTypes hashType)
@@ -188,12 +209,12 @@ namespace ProphetsWay.Utilities
 				}
 			}
 
-			public int GenerateIncrementalHash(byte[] inputBuffer, int inputOffset, int inputCount, bool final = false)
+			public int GenerateIncrementalHash(byte[] inputBuffer, int bufferLength, bool final = false)
 			{
-				if (final)
-					return Hasher.TransformBlock(inputBuffer, 0, inputBuffer.Length, inputBuffer, 0);
+				if (!final)
+					return Hasher.TransformBlock(inputBuffer, 0, bufferLength, inputBuffer, 0);
 				else
-					Hasher.TransformFinalBlock(inputBuffer, 0, inputBuffer.Length);
+					Hasher.TransformFinalBlock(inputBuffer, 0, bufferLength);
 				
 				return 0;
 			}

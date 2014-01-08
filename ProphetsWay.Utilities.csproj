@@ -36,6 +36,7 @@
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="protobuf-net">
       <HintPath>..\Libraries\protobuf-net r640\Full\net30\protobuf-net.dll</HintPath>
     </Reference>
