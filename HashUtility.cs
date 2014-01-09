@@ -118,7 +118,7 @@ namespace ProphetsWay.Utilities
 			//once all threads have read the buffer, clear the buffer's data (can leave the buffer item record)
 
 			const int bufferChunkSize = 32 * 1024 * 1024;
-			var totalWorkers = 4;
+			const int totalWorkers = 4;
 
 			var md5Worker = new HashWorker(HashTypes.MD5);
 			var sha1Worker = new HashWorker(HashTypes.SHA1);
@@ -170,7 +170,7 @@ namespace ProphetsWay.Utilities
 
 			public int Length { get; private set; }
 
-			private int _signOffReq;
+			private readonly int _signOffReq;
 			private int _signOffCount;
 			public void SignOff()
 			{
@@ -190,8 +190,6 @@ namespace ProphetsWay.Utilities
 
 		private class HashWorker
 		{
-			public int Offset { get; set; }
-			
 			public byte[] Hash
 			{
 				get
@@ -248,10 +246,10 @@ namespace ProphetsWay.Utilities
 				}
 			}
 
-			public int GenerateIncrementalHash(byte[] inputBuffer, int bufferLength)
+			public void GenerateIncrementalHash(byte[] inputBuffer, int bufferLength)
 			{
 				if (bufferLength > 0)
-					return Hasher.TransformBlock(inputBuffer, 0, bufferLength, inputBuffer, 0);
+					Hasher.TransformBlock(inputBuffer, 0, bufferLength, inputBuffer, 0);
 				else
 					Hasher.TransformFinalBlock(inputBuffer, 0, bufferLength);
 
@@ -259,8 +257,6 @@ namespace ProphetsWay.Utilities
 				//	return Hasher.TransformBlock(inputBuffer, 0, bufferLength, inputBuffer, 0);
 				//else
 				//	Hasher.TransformFinalBlock(inputBuffer, 0, bufferLength);
-
-				return 0;
 			}
 
 
@@ -272,15 +268,14 @@ namespace ProphetsWay.Utilities
 
 			private void GenerateHashThreaded()
 			{
-				byte[] data;
-				int length;
+			    int length;
 				var currChunk = 0;
 
 				do
 				{
 					while (Buffer.Count <= currChunk) { Thread.Sleep(10); }
 
-					data = Buffer[currChunk].Data;
+					var data = Buffer[currChunk].Data;
 					length = Buffer[currChunk].Length;
 					Buffer[currChunk].SignOff();
 
@@ -321,9 +316,9 @@ namespace ProphetsWay.Utilities
 		}
 		private static void ReadStreamIntoBuffer(object args)
 		{
-			ReadStreamIntoBufferArgs tArgs = (ReadStreamIntoBufferArgs)args;
+			var tArgs = (ReadStreamIntoBufferArgs)args;
 
-			byte[] buffer = new byte[tArgs.BufferArraySize];
+			var buffer = new byte[tArgs.BufferArraySize];
 			int bufferLength;
 
 			do
