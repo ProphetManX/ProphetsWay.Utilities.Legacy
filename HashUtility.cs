@@ -34,11 +34,13 @@ namespace ProphetsWay.Utilities
 
 	public static class HashUtility
 	{
+		private const int BUFFER_SIZE = 32 * 1024 * 1024;
+
 		private const string INVALID_HASH_TYPE = @"Improper value of HashType was used.";
 
 		public static HashCollection GenerateHashes(this Stream stream)
 		{
-			var buffer = new byte[32 * 1024 * 1024];
+			var buffer = new byte[BUFFER_SIZE];
 
 			var md5Worker = new HashWorker(HashTypes.MD5);
 			var sha1Worker = new HashWorker(HashTypes.SHA1);
@@ -48,27 +50,22 @@ namespace ProphetsWay.Utilities
 
 			//event here to setup progressbar length
 
-			var max = (int)(stream.Length / buffer.Length);
+			//var max = (int)(stream.Length / buffer.Length);
 
-			var x = new ComputerInfo();
-			var y = x.TotalPhysicalMemory;
+			//var x = new ComputerInfo();
+			//var y = x.TotalPhysicalMemory;
 			int bufferLength;
 
 			do
 			{
 				bufferLength = stream.Read(buffer, 0, buffer.Length);
-				max--;
+				//max--;
 
 				//process the buffer here...
 				md5Worker.GenerateIncrementalHash(buffer, bufferLength);
 				sha1Worker.GenerateIncrementalHash(buffer, bufferLength);
 				sha256Worker.GenerateIncrementalHash(buffer, bufferLength);
 				sha512Worker.GenerateIncrementalHash(buffer, bufferLength);
-
-				//md5Worker.GenerateIncrementalHash(buffer, bufferLength, bufferLength <= 0);
-				//sha1Worker.GenerateIncrementalHash(buffer, bufferLength, bufferLength <= 0);
-				//sha256Worker.GenerateIncrementalHash(buffer, bufferLength, bufferLength <= 0);
-				//sha512Worker.GenerateIncrementalHash(buffer, bufferLength, bufferLength <= 0);
 
 			} while (bufferLength > 0);
 
@@ -116,8 +113,8 @@ namespace ProphetsWay.Utilities
 
 			//I need the worker threads to wait and read from the input buffer
 			//once all threads have read the buffer, clear the buffer's data (can leave the buffer item record)
-
-			const int bufferChunkSize = 32 * 1024 * 1024;
+			
+			const int bufferChunkSize = BUFFER_SIZE;
 			const int totalWorkers = 4;
 
 			var md5Worker = new HashWorker(HashTypes.MD5);
@@ -143,13 +140,11 @@ namespace ProphetsWay.Utilities
 			sha512Worker.GenerateThreadedHash();
 
 
-			//while (Buffer.Count < totalChunks || Buffer[totalChunks - 1].FinishedCount != totalWorkers)
 			while(Buffer.Count == 0 || Buffer[Buffer.Count -1].FinishedCount != totalWorkers)
 				Thread.Sleep(100);
 
 			var ret = new HashCollection(md5Worker.Hash, sha1Worker.Hash, sha256Worker.Hash, sha512Worker.Hash);
 			return ret;
-
 		}
 
 		private static List<BufferedData> Buffer { get; set; }
@@ -252,11 +247,6 @@ namespace ProphetsWay.Utilities
 					Hasher.TransformBlock(inputBuffer, 0, bufferLength, inputBuffer, 0);
 				else
 					Hasher.TransformFinalBlock(inputBuffer, 0, bufferLength);
-
-				//if (!final)
-				//	return Hasher.TransformBlock(inputBuffer, 0, bufferLength, inputBuffer, 0);
-				//else
-				//	Hasher.TransformFinalBlock(inputBuffer, 0, bufferLength);
 			}
 
 
@@ -279,8 +269,6 @@ namespace ProphetsWay.Utilities
 					length = Buffer[currChunk].Length;
 					Buffer[currChunk].SignOff();
 
-					//GenerateIncrementalHash(data, length, length <= 0);
-
 					GenerateIncrementalHash(data, length);
 
 					Buffer[currChunk].Finished();
@@ -288,21 +276,6 @@ namespace ProphetsWay.Utilities
 					currChunk++;
 				}
 				while (length > 0);
-
-
-
-				//for (int i = 0; i <= _totalChunks; i++)
-				//{
-				//	while (Buffer.Count <= i) { Thread.Sleep(10); }
-
-				//	byte[] data = Buffer[i].Data;
-				//	int length = Buffer[i].Length;
-				//	Buffer[i].SignOff();
-
-				//	GenerateIncrementalHash(data, length, i == _totalChunks - 1);
-
-				//	Buffer[i].Finished();
-				//}
 			}
 		}
 
@@ -317,12 +290,12 @@ namespace ProphetsWay.Utilities
 		private static void ReadStreamIntoBuffer(object args)
 		{
 			var tArgs = (ReadStreamIntoBufferArgs)args;
-
-			var buffer = new byte[tArgs.BufferArraySize];
 			int bufferLength;
 
 			do
 			{
+				var buffer = new byte[tArgs.BufferArraySize];
+
 				bufferLength = tArgs.DataStream.Read(buffer, 0, buffer.Length);
 				Buffer.Add(new BufferedData(buffer, bufferLength, tArgs.SignOffsRequiredToClearBuffer));
 

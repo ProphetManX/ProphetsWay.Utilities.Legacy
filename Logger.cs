@@ -71,6 +71,8 @@ namespace ProphetsWay.Utilities
 
 	public abstract class LoggingDestination
 	{
+		protected object LoggerLock = new object();
+
 		private readonly LogLevels _reportingLevel;
 
 		public LoggingDestination(LogLevels reportingLevel)
@@ -95,13 +97,15 @@ namespace ProphetsWay.Utilities
 
 		protected override void LogStatement(string message, LogLevels level)
 		{
-			Console.WriteLine(message);
+			lock (LoggerLock)
+				Console.WriteLine(message);
 		}
 	}
 
 	public class FileDestination : LoggingDestination
 	{
-		public FileDestination(string fileName, LogLevels level = LogLevels.Debug, bool clearFile = true):base(level)
+		public FileDestination(string fileName, LogLevels level = LogLevels.Debug, bool clearFile = true)
+			: base(level)
 		{
 			_file = new FileInfo(fileName);
 
@@ -134,8 +138,11 @@ namespace ProphetsWay.Utilities
 
 		protected override void LogStatement(string message, LogLevels level)
 		{
-			_writer.WriteLine(message);
-			_writer.Flush();
+			lock (LoggerLock)
+			{
+				_writer.WriteLine(message);
+				_writer.Flush();
+			}
 		}
 
 	}
