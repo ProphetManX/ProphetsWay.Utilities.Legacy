@@ -6,8 +6,8 @@ namespace ProphetsWay.Utilities
 {
 	public static class FileTools
 	{
-		private const int ReadBufferSize = 512 * 1024;
-		private const int WriteBufferSize = 512 * 1024;
+		private const int READ_BUFFER_SIZE = 512 * 1024;
+		private const int WRITE_BUFFER_SIZE = 512 * 1024;
 
 		public static void CopyFast(this FileInfo fileInfo, string requestedFullName)
 		{
@@ -15,18 +15,18 @@ namespace ProphetsWay.Utilities
 			{
 				Logger.Debug(string.Format("COPYING file [{0}] to location [{1}].", fileInfo.FullName, requestedFullName));
 
-				var buffer = new byte[ReadBufferSize];
+				var buffer = new byte[READ_BUFFER_SIZE];
 				using (var outStream = File.OpenWrite(requestedFullName))
 				{
 					using (var inStream = fileInfo.OpenRead())
 					{
 						int bytesRead;
-						while ((bytesRead = inStream.Read(buffer, 0, ReadBufferSize)) != 0)
+						while ((bytesRead = inStream.Read(buffer, 0, READ_BUFFER_SIZE)) != 0)
 						{
 							var written = 0;
 							while(written < bytesRead)
 							{
-								var toWrite = Math.Min(WriteBufferSize, bytesRead - written);
+								var toWrite = Math.Min(WRITE_BUFFER_SIZE, bytesRead - written);
 								outStream.Write(buffer, written, toWrite);
 								written += toWrite;
 							}

@@ -34,7 +34,7 @@ namespace ProphetsWay.Utilities
 
 	public static class HashUtility
 	{
-		private const int BUFFER_SIZE = 32 * 1024 * 1024;
+		private const int BUFFER_SIZE = 32*1024*1024;
 
 		private const string INVALID_HASH_TYPE = @"Improper value of HashType was used.";
 
@@ -113,7 +113,7 @@ namespace ProphetsWay.Utilities
 
 			//I need the worker threads to wait and read from the input buffer
 			//once all threads have read the buffer, clear the buffer's data (can leave the buffer item record)
-			
+
 			const int bufferChunkSize = BUFFER_SIZE;
 			const int totalWorkers = 4;
 
@@ -140,7 +140,7 @@ namespace ProphetsWay.Utilities
 			sha512Worker.GenerateThreadedHash();
 
 
-			while(Buffer.Count == 0 || Buffer[Buffer.Count -1].FinishedCount != totalWorkers)
+			while (Buffer.Count == 0 || Buffer[Buffer.Count - 1].FinishedCount != totalWorkers)
 				Thread.Sleep(100);
 
 			var ret = new HashCollection(md5Worker.Hash, sha1Worker.Hash, sha256Worker.Hash, sha512Worker.Hash);
@@ -167,6 +167,7 @@ namespace ProphetsWay.Utilities
 
 			private readonly int _signOffReq;
 			private int _signOffCount;
+
 			public void SignOff()
 			{
 				_signOffCount++;
@@ -176,6 +177,7 @@ namespace ProphetsWay.Utilities
 			}
 
 			public int FinishedCount { get; private set; }
+
 			public void Finished()
 			{
 				FinishedCount++;
@@ -187,14 +189,11 @@ namespace ProphetsWay.Utilities
 		{
 			public byte[] Hash
 			{
-				get
-				{
-					return Hasher.Hash;
-				}
+				get { return Hasher.Hash; }
 			}
 
 			private HashAlgorithm Hasher { get; set; }
-			
+
 			private readonly HashTypes _hashType;
 
 			public HashWorker(HashTypes hashType)
@@ -258,12 +257,15 @@ namespace ProphetsWay.Utilities
 
 			private void GenerateHashThreaded()
 			{
-			    int length;
+				int length;
 				var currChunk = 0;
 
 				do
 				{
-					while (Buffer.Count <= currChunk) { Thread.Sleep(10); }
+					while (Buffer.Count <= currChunk)
+					{
+						Thread.Sleep(10);
+					}
 
 					var data = Buffer[currChunk].Data;
 					length = Buffer[currChunk].Length;
@@ -274,8 +276,7 @@ namespace ProphetsWay.Utilities
 					Buffer[currChunk].Finished();
 
 					currChunk++;
-				}
-				while (length > 0);
+				} while (length > 0);
 			}
 		}
 
@@ -287,9 +288,10 @@ namespace ProphetsWay.Utilities
 
 			public int SignOffsRequiredToClearBuffer { get; set; }
 		}
+
 		private static void ReadStreamIntoBuffer(object args)
 		{
-			var tArgs = (ReadStreamIntoBufferArgs)args;
+			var tArgs = (ReadStreamIntoBufferArgs) args;
 			int bufferLength;
 
 			do

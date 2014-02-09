@@ -27,7 +27,7 @@ namespace ProphetsWay.Utilities
 			var objType = cType;
 
 			// ReSharper disable PossibleNullReferenceException
-			if (cType.IsGenericType && cType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+			if (cType.IsGenericType && cType.GetGenericTypeDefinition() == typeof(Nullable<>))
 				objType = new NullableConverter(cType).UnderlyingType;
 			// ReSharper restore PossibleNullReferenceException
 
@@ -86,7 +86,7 @@ namespace ProphetsWay.Utilities
 
 			if (conversionType == typeof(DateTime?))
 				if (DateTime.TryParse(input, out dt))
-					obj = new DateTime?(dt);
+					obj = dt;
 
 			if (conversionType == typeof(DateTime))
 				if (DateTime.TryParse(input, out dt))
@@ -94,7 +94,7 @@ namespace ProphetsWay.Utilities
 
 			if (conversionType == typeof(TimeSpan?))
 				if (TimeSpan.TryParse(input, out ts))
-					obj = new TimeSpan?(ts);
+					obj = ts;
 
 			if (conversionType == typeof(TimeSpan))
 				if (TimeSpan.TryParse(input, out ts))
@@ -106,7 +106,7 @@ namespace ProphetsWay.Utilities
 
 			if (conversionType == typeof(short?))
 				if (short.TryParse(input, out s))
-					obj = new short?(s);
+					obj = s;
 
 			if (conversionType == typeof(short))
 				if (short.TryParse(input, out s))
@@ -118,11 +118,11 @@ namespace ProphetsWay.Utilities
 
 			if (conversionType == typeof(ushort?))
 				if (ushort.TryParse(input, out u))
-					obj = new ushort?(u);
+					obj = u;
 
 			if (conversionType == typeof(int?))
 				if (int.TryParse(input, out i))
-					obj = new int?(i);
+					obj = i;
 
 			if (conversionType == typeof(int))
 				if (int.TryParse(input, out i))
@@ -130,7 +130,7 @@ namespace ProphetsWay.Utilities
 
 			if (conversionType == typeof(long?))
 				if (long.TryParse(input, out l))
-					obj = new long?(l);
+					obj = l;
 
 			if (conversionType == typeof(long))
 				if (long.TryParse(input, out l))
@@ -138,7 +138,7 @@ namespace ProphetsWay.Utilities
 
 			if (conversionType == typeof(double?))
 				if (double.TryParse(input, out d))
-					obj = new double?(d);
+					obj = d;
 
 			if (conversionType == typeof(double))
 				if (double.TryParse(input, out d))
@@ -146,7 +146,7 @@ namespace ProphetsWay.Utilities
 
 			if (conversionType == typeof(float?))
 				if (float.TryParse(input, out f))
-					obj = new float?(f);
+					obj = f;
 
 			if (conversionType == typeof(float))
 				if (float.TryParse(input, out f))

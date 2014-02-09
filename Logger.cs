@@ -16,9 +16,10 @@ namespace ProphetsWay.Utilities
 		Debug = 15
 	}
 
-	public static class Logger  
+	public static class Logger
 	{
 		private static IList<LoggingDestination> _destinations;
+
 		private static IList<LoggingDestination> LoggingDestinations
 		{
 			get { return _destinations ?? (_destinations = new List<LoggingDestination>()); }
@@ -46,7 +47,8 @@ namespace ProphetsWay.Utilities
 
 		public static void Error(Exception ex, string generalMessage = "")
 		{
-			Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "ERROR:  ".PadLeft(15), generalMessage, ex.Message, ex.StackTrace), LogLevels.Error);
+			Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "ERROR:  ".PadLeft(15), generalMessage, ex.Message, ex.StackTrace),
+				LogLevels.Error);
 		}
 
 		public static void Warn(string message, Exception ex = null)
@@ -54,7 +56,8 @@ namespace ProphetsWay.Utilities
 			if (ex == null)
 				Log(string.Format("{0}{1}", "WARNING:  ".PadLeft(15), message), LogLevels.Warning);
 			else
-				Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace), LogLevels.Error);
+				Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace),
+					LogLevels.Error);
 		}
 
 		private static void Log(string message, LogLevels level)
@@ -93,7 +96,9 @@ namespace ProphetsWay.Utilities
 
 	public class ConsoleDestination : LoggingDestination
 	{
-		public ConsoleDestination(LogLevels level = LogLevels.Debug) : base(level) { }
+		public ConsoleDestination(LogLevels level = LogLevels.Debug) : base(level)
+		{
+		}
 
 		protected override void LogStatement(string message, LogLevels level)
 		{
@@ -152,9 +157,17 @@ namespace ProphetsWay.Utilities
 		private readonly string _source;
 		private const string _log = "Application";
 
-		public EventLogDestination() : this(null, LogLevels.Debug) { }
-		public EventLogDestination(LogLevels logLevel) : this(null, logLevel) { }
-		public EventLogDestination(string applicationName) : this(applicationName, LogLevels.Debug) { }
+		public EventLogDestination() : this(null, LogLevels.Debug)
+		{
+		}
+
+		public EventLogDestination(LogLevels logLevel) : this(null, logLevel)
+		{
+		}
+
+		public EventLogDestination(string applicationName) : this(applicationName, LogLevels.Debug)
+		{
+		}
 
 		public EventLogDestination(string applicationName, LogLevels logLevel)
 			: base(logLevel)
