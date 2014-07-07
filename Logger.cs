@@ -78,7 +78,7 @@ namespace ProphetsWay.Utilities
 
 		private readonly LogLevels _reportingLevel;
 
-		public LoggingDestination(LogLevels reportingLevel)
+		protected LoggingDestination(LogLevels reportingLevel)
 		{
 			_reportingLevel = reportingLevel;
 		}
@@ -112,23 +112,23 @@ namespace ProphetsWay.Utilities
 		public FileDestination(string fileName, LogLevels level = LogLevels.Debug, bool clearFile = true)
 			: base(level)
 		{
-			_file = new FileInfo(fileName);
+			var file = new FileInfo(fileName);
 
 			try
 			{
-				if (_file.Exists && !clearFile)
+				if (file.Exists && !clearFile)
 				{
-					_writer = _file.AppendText();
+					_writer = file.AppendText();
 				}
 				else
 				{
-					if (_file.Exists)
-						_file.Delete();
+					if (file.Exists)
+						file.Delete();
 
-					if (!_file.Directory.Exists)
-						_file.Directory.Create();
+					if (file.Directory != null && !file.Directory.Exists)
+						file.Directory.Create();
 
-					_writer = _file.CreateText();
+					_writer = file.CreateText();
 				}
 			}
 			catch (Exception ex)
@@ -138,7 +138,6 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
-		private readonly FileInfo _file;
 		private readonly StreamWriter _writer;
 
 		protected override void LogStatement(string message, LogLevels level)
@@ -155,7 +154,7 @@ namespace ProphetsWay.Utilities
 	public class EventLogDestination : LoggingDestination
 	{
 		private readonly string _source;
-		private const string _log = "Application";
+		private const string WINDOWS_EVENT_VIEW_LOG_NAME = "Application";
 
 		public EventLogDestination() : this(null, LogLevels.Debug)
 		{
@@ -175,17 +174,15 @@ namespace ProphetsWay.Utilities
 			if (string.IsNullOrEmpty(applicationName))
 			{
 				var a = Assembly.GetEntryAssembly();
-				if (a != null)
-					applicationName = a.GetName().Name;
-				else
-					applicationName = "Anonomous Application";
-
+				applicationName = a != null
+					? a.GetName().Name
+					: "Anonomous Application";
 			}
 
 			_source = applicationName.Replace(" ", "");
 
 			if (!EventLog.SourceExists(_source))
-				EventLog.CreateEventSource(_source, _log);
+				EventLog.CreateEventSource(_source, WINDOWS_EVENT_VIEW_LOG_NAME);
 		}
 
 		protected override void LogStatement(string message, LogLevels level)
