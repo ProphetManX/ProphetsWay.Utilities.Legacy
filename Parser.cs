@@ -41,6 +41,12 @@ namespace ProphetsWay.Utilities
 
 		private static void EnumTryParse<T>(string type, out T result)
 		{
+			if (string.IsNullOrEmpty(type))
+			{
+				result = default(T);
+				return;				
+			}
+
 			var typeFixed = type.Replace(' ', '_');
 			if (Enum.IsDefined(typeof(T), typeFixed))
 				result = (T)Enum.Parse(typeof(T), typeFixed, true);
