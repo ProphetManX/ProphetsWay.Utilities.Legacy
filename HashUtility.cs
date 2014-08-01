@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.VisualBasic.Devices;
 using System.ComponentModel;
 using System.IO;
 using System.Threading;

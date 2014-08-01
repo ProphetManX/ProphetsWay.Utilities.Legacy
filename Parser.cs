@@ -26,10 +26,8 @@ namespace ProphetsWay.Utilities
 			var cType = typeof(T);
 			var objType = cType;
 
-			// ReSharper disable PossibleNullReferenceException
 			if (cType.IsGenericType && cType.GetGenericTypeDefinition() == typeof(Nullable<>))
 				objType = new NullableConverter(cType).UnderlyingType;
-			// ReSharper restore PossibleNullReferenceException
 
 			var obj = ParseStringAsType(input, cType);
 
@@ -85,10 +83,8 @@ namespace ProphetsWay.Utilities
 			bool b;
 			IPAddress ip;
 
-			// ReSharper disable PossibleNullReferenceException
-			if (conversionType.IsGenericType && conversionType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+			if (conversionType.IsGenericType && conversionType.GetGenericTypeDefinition() == typeof(Nullable<>))
 				objType = new NullableConverter(conversionType).UnderlyingType;
-			// ReSharper restore PossibleNullReferenceException
 
 			if (conversionType == typeof(DateTime?))
 				if (DateTime.TryParse(input, out dt))
