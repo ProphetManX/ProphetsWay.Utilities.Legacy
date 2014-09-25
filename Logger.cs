@@ -56,8 +56,7 @@ namespace ProphetsWay.Utilities
 			if (ex == null)
 				Log(string.Format("{0}{1}", "WARNING:  ".PadLeft(15), message), LogLevels.Warning);
 			else
-				Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace),
-					LogLevels.Error);
+				Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace), LogLevels.Warning);
 		}
 
 		private static void Log(string message, LogLevels level)
