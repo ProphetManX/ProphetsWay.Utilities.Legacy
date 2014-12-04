@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Remoting.Messaging;
 
 namespace ProphetsWay.Utilities
 {
@@ -37,37 +38,42 @@ namespace ProphetsWay.Utilities
 
 		public static void Info(string message)
 		{
-			Log(string.Format("{0}{1}", "INFORMATION:  ".PadLeft(15), message), LogLevels.Information);
+			//Log(string.Format("{0}{1}", "INFORMATION:  ".PadLeft(15), message), LogLevels.Information);
+			Log(message, LogLevels.Information);
 		}
 
 		public static void Debug(string message)
 		{
-			Log(string.Format("{0}{1}", "DEBUG:  ".PadLeft(15), message), LogLevels.Debug);
+			//Log(string.Format("{0}{1}", "DEBUG:  ".PadLeft(15), message), LogLevels.Debug);
+			Log(message, LogLevels.Debug);
 		}
 
 		public static void Error(Exception ex, string generalMessage = "")
 		{
-			Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "ERROR:  ".PadLeft(15), generalMessage, ex.Message, ex.StackTrace),
-				LogLevels.Error);
+			//Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "ERROR:  ".PadLeft(15), generalMessage, ex.Message, ex.StackTrace), LogLevels.Error);
+			Log(string.Format("{0}\r\n{1}\r\n{2}", generalMessage, ex.Message, ex.StackTrace), LogLevels.Error);
 		}
 
 		public static void Warn(string message, Exception ex = null)
 		{
 			if (ex == null)
-				Log(string.Format("{0}{1}", "WARNING:  ".PadLeft(15), message), LogLevels.Warning);
+				//Log(string.Format("{0}{1}", "WARNING:  ".PadLeft(15), message), LogLevels.Warning);
+				Log(message, LogLevels.Warning);
 			else
-				Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace), LogLevels.Warning);
+				//Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace), LogLevels.Warning);
+				Log(string.Format("{0}\r\n{1}\r\n{2}", message, ex.Message, ex.StackTrace), LogLevels.Warning);
 		}
 
 		private static void Log(string message, LogLevels level)
 		{
-			var formattedMessage = string.Format("{0} :: {1}", DateTime.Now, message);
+			//var formattedMessage = string.Format("{0} :: {1}", DateTime.Now, message);
 
 			if (LoggingDestinations.Count == 0)
 				AddDestination(new EventLogDestination());
 
 			foreach (var dest in LoggingDestinations)
-				dest.Log(formattedMessage, level);
+				//dest.Log(formattedMessage, level);
+				dest.Log(message, level);
 		}
 	}
 
@@ -93,20 +99,80 @@ namespace ProphetsWay.Utilities
 		protected abstract void LogStatement(string message, LogLevels level);
 	}
 
-	public class ConsoleDestination : LoggingDestination
+	public abstract class TextLogger : LoggingDestination
+	{
+		protected TextLogger(LogLevels reportingLevel) : base(reportingLevel)
+		{
+		}
+
+		protected override void LogStatement(string message, LogLevels level)
+		{
+			//var formattedMessage = string.Format("{0} :: {1}", DateTime.Now, message);
+			//Log(string.Format("{0}{1}", "WARNING:  ".PadLeft(15), message), LogLevels.Warning);
+
+			var msg = string.Format("{0} :: {1}:  {2}", DateTime.Now, level.ToString().PadLeft(12), message);
+			LogStatement(msg);
+		}
+
+		protected abstract void LogStatement(string message);
+	}
+
+	public class ConsoleDestination : TextLogger
 	{
 		public ConsoleDestination(LogLevels level = LogLevels.Debug) : base(level)
 		{
 		}
 
-		protected override void LogStatement(string message, LogLevels level)
+		protected override void LogStatement(string message)
 		{
 			lock (LoggerLock)
 				Console.WriteLine(message);
 		}
 	}
 
-	public class FileDestination : LoggingDestination
+	public class UserInterfaceDestination : LoggingDestination
+	{
+		public UserInterfaceDestination(LogLevels reportingLevel) : base(reportingLevel)
+		{
+
+		}
+
+		protected override void LogStatement(string message, LogLevels level)
+		{
+			LoggingEvent.BeginInvoke(this, new LoggerArgs{LogLevel = level, Message = message}, EndAsyncLogEvent, null);
+		}
+
+		private static void EndAsyncLogEvent(IAsyncResult iar)
+		{
+			var ar = iar as AsyncResult;
+			if (ar == null)
+				return;
+
+			var invokedMethod = ar.AsyncDelegate as EventHandler<LoggerArgs>;
+
+			try
+			{
+				if (invokedMethod != null)
+					invokedMethod.EndInvoke(iar);
+			}
+			catch
+			{
+				
+			}
+		}
+
+		public EventHandler<LoggerArgs> LoggingEvent;
+
+		public class LoggerArgs : EventArgs
+		{
+			public string Message { get; set; }
+
+			public LogLevels LogLevel { get; set; }
+		}
+
+	}
+
+	public class FileDestination : TextLogger
 	{
 		public FileDestination(string fileName, LogLevels level = LogLevels.Debug, bool clearFile = true)
 			: base(level)
@@ -139,7 +205,7 @@ namespace ProphetsWay.Utilities
 
 		private readonly StreamWriter _writer;
 
-		protected override void LogStatement(string message, LogLevels level)
+		protected override void LogStatement(string message)
 		{
 			lock (LoggerLock)
 			{
@@ -170,18 +236,25 @@ namespace ProphetsWay.Utilities
 		public EventLogDestination(string applicationName, LogLevels logLevel)
 			: base(logLevel)
 		{
-			if (string.IsNullOrEmpty(applicationName))
+			try
 			{
-				var a = Assembly.GetEntryAssembly();
-				applicationName = a != null
-					? a.GetName().Name
-					: "Anonomous Application";
+				if (string.IsNullOrEmpty(applicationName))
+				{
+					var a = Assembly.GetEntryAssembly();
+					applicationName = a != null
+						? a.GetName().Name
+						: "Anonomous Application";
+				}
+
+				_source = applicationName.Replace(" ", "");
+
+				if (!EventLog.SourceExists(_source))
+					EventLog.CreateEventSource(_source, WINDOWS_EVENT_VIEW_LOG_NAME);
 			}
-
-			_source = applicationName.Replace(" ", "");
-
-			if (!EventLog.SourceExists(_source))
-				EventLog.CreateEventSource(_source, WINDOWS_EVENT_VIEW_LOG_NAME);
+			catch (Exception)
+			{
+				//it's sad, but if we can't actually log to the event log, don't let it crash the whole app
+			}
 		}
 
 		protected override void LogStatement(string message, LogLevels level)
