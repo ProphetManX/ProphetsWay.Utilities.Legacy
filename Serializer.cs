@@ -16,16 +16,16 @@ namespace ProphetsWay.Utilities
 			s.Close();
 		}
 
-        public static string SerializeAsXml(this object objectToSerialize)
-        {
-            var formatter = new XmlSerializer(objectToSerialize.GetType());
-            var s = new StringWriter();
-            var x = new XmlTextWriter(s);
+		public static string SerializeAsXml(this object objectToSerialize)
+		{
+			var formatter = new XmlSerializer(objectToSerialize.GetType());
+			var s = new StringWriter();
+			var x = new XmlTextWriter(s);
 
-            formatter.Serialize(x, objectToSerialize);
+			formatter.Serialize(x, objectToSerialize);
 
-            return s.ToString();
-        }
+			return s.ToString();
+		}
 
 		public static MemoryStream SerializeAsByteArr(this object objectToSerialize)
 		{
@@ -39,19 +39,19 @@ namespace ProphetsWay.Utilities
 			return s;
 		}
 
-        /*
-        public static T DeserializeFromXml<T>(this XmlDocument xmlDocument)
-        {
-            var formatter = new XmlSerializer(typeof(T));
-            XmlParserContext context = new XmlParserContext(xmlDocument.NameTable,);
-            var r = new XmlTextReader(xmlDocument.InnerXml, XmlNodeType.Document, )
-            var 
+		/*
+		public static T DeserializeFromXml<T>(this XmlDocument xmlDocument)
+		{
+			var formatter = new XmlSerializer(typeof(T));
+			XmlParserContext context = new XmlParserContext(xmlDocument.NameTable,);
+			var r = new XmlTextReader(xmlDocument.InnerXml, XmlNodeType.Document, )
+			var 
 
-            var obj = (T)formatter.Deserialize(r);
+			var obj = (T)formatter.Deserialize(r);
 
-            return obj;
-        }
-        //*/
+			return obj;
+		}
+		//*/
 
 		public static T DeserializeFromFile<T>(string targetFileName)
 		{
@@ -70,22 +70,22 @@ namespace ProphetsWay.Utilities
 			return obj;
 		}
 
-        public static MemoryStream SerializeAsProtobuf(this object objectToSerialize)
-        {
-            var s = new MemoryStream();
-            ProtoBuf.Serializer.Serialize(s, objectToSerialize);
+		public static MemoryStream SerializeAsProtobuf(this object objectToSerialize)
+		{
+			var s = new MemoryStream();
+			ProtoBuf.Serializer.Serialize(s, objectToSerialize);
 
-            s.Flush();
-            s.Position = 0;
+			s.Flush();
+			s.Position = 0;
 
-            return s;
-        }
+			return s;
+		}
 
-        public static T DeserializeFromProtobuf<T>(this Stream protoStream)
-        {
-            var obj = ProtoBuf.Serializer.Deserialize<T>(protoStream);
-            return obj;
-        }
+		public static T DeserializeFromProtobuf<T>(this Stream protoStream)
+		{
+			var obj = ProtoBuf.Serializer.Deserialize<T>(protoStream);
+			return obj;
+		}
 
 		/*
 		public void SerializeObject(string filename, ObjectToSerialize objectToSerialize)

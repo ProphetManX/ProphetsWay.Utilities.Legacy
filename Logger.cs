@@ -51,7 +51,10 @@ namespace ProphetsWay.Utilities
 		public static void Error(Exception ex, string generalMessage = "")
 		{
 			//Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "ERROR:  ".PadLeft(15), generalMessage, ex.Message, ex.StackTrace), LogLevels.Error);
-			Log(string.Format("{0}\r\n{1}\r\n{2}", generalMessage, ex.Message, ex.StackTrace), LogLevels.Error);
+			string exMessage, exStackTrace;
+			ExceptionLogExtractor(ex, out exMessage, out exStackTrace);
+
+			Log(string.Format("{0}\r\n{1}\r\n{2}", generalMessage, exMessage, exStackTrace), LogLevels.Error);
 		}
 
 		public static void Warn(string message, Exception ex = null)
@@ -60,8 +63,13 @@ namespace ProphetsWay.Utilities
 				//Log(string.Format("{0}{1}", "WARNING:  ".PadLeft(15), message), LogLevels.Warning);
 				Log(message, LogLevels.Warning);
 			else
+			{
+				string exMessage, exStackTrace;
+				ExceptionLogExtractor(ex, out exMessage, out exStackTrace);
+
 				//Log(string.Format("{0}{1}\r\n{2}\r\n{3}", "WARNING:  ".PadLeft(15), message, ex.Message, ex.StackTrace), LogLevels.Warning);
-				Log(string.Format("{0}\r\n{1}\r\n{2}", message, ex.Message, ex.StackTrace), LogLevels.Warning);
+				Log(string.Format("{0}\r\n{1}\r\n{2}", message, exMessage, exStackTrace), LogLevels.Warning);
+			}
 		}
 
 		private static void Log(string message, LogLevels level)
@@ -74,6 +82,23 @@ namespace ProphetsWay.Utilities
 			foreach (var dest in LoggingDestinations)
 				//dest.Log(formattedMessage, level);
 				dest.Log(message, level);
+		}
+
+		private static void ExceptionLogExtractor(Exception ex, out string message, out string stack)
+		{
+			var imessage = string.Empty;
+			var istack = string.Empty;
+			if (ex.InnerException != null)
+				ExceptionLogExtractor(ex.InnerException, out imessage, out istack);
+
+
+			message = string.IsNullOrEmpty(imessage)
+				? ex.Message
+				: string.Format("{0}{1}{1}Inner Exception Message:{1}{2}", ex.Message, Environment.NewLine, imessage);
+
+			stack = string.IsNullOrEmpty(istack)
+				? ex.StackTrace
+				: string.Format("{0}{1}{1}Inner Exception Stack Trace:{1}{2}", ex.StackTrace, Environment.NewLine, istack);
 		}
 	}
 
