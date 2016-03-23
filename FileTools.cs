@@ -13,7 +13,7 @@ namespace ProphetsWay.Utilities
 		{
 			try
 			{
-				Logger.Debug(string.Format("COPYING file [{0}] to location [{1}].", fileInfo.FullName, requestedFullName));
+				Logger.Debug($"COPYING file [{fileInfo.FullName}] to location [{requestedFullName}].");
 
 				var buffer = new byte[READ_BUFFER_SIZE];
 				using (var outStream = File.OpenWrite(requestedFullName))
@@ -24,7 +24,7 @@ namespace ProphetsWay.Utilities
 						while ((bytesRead = inStream.Read(buffer, 0, READ_BUFFER_SIZE)) != 0)
 						{
 							var written = 0;
-							while(written < bytesRead)
+							while (written < bytesRead)
 							{
 								var toWrite = Math.Min(WRITE_BUFFER_SIZE, bytesRead - written);
 								outStream.Write(buffer, written, toWrite);
@@ -36,7 +36,7 @@ namespace ProphetsWay.Utilities
 			}
 			catch (Exception ex)
 			{
-				Logger.Error(ex, string.Format("Unable to move file [{0}] to location [{1}]", fileInfo.FullName, requestedFullName));
+				Logger.Error(ex, $"Unable to move file [{fileInfo.FullName}] to location [{requestedFullName}]");
 				throw;
 			}
 		}
@@ -46,12 +46,12 @@ namespace ProphetsWay.Utilities
 
 			try
 			{
-				Logger.Debug(string.Format("MOVING file [{0}] to location [{1}].", fileInfo.FullName, newName));
+				Logger.Debug($"MOVING file [{fileInfo.FullName}] to location [{newName}].");
 				fileInfo.MoveTo(newName);
 			}
 			catch (Exception ex)
 			{
-				Logger.Error(ex, string.Format("Unable to move file [{0}] to location [{1}]", fileInfo.FullName, newName));
+				Logger.Error(ex, $"Unable to move file [{fileInfo.FullName}] to location [{newName}]");
 				throw;
 			}
 		}
@@ -68,27 +68,27 @@ namespace ProphetsWay.Utilities
 		/// </summary>
 		public static string CheckAndRenameFile(string requestedFileName)
 		{
-			Logger.Debug(string.Format("{0}{1}", "Requested File Name:  ".PadLeft(40), requestedFileName));
+			Logger.Debug($"{"Requested File Name:  ".PadLeft(40)}{requestedFileName}");
 
 			var newFileName = requestedFileName;
 			var file = new FileInfo(requestedFileName);
 
-			if (!Directory.Exists(file.DirectoryName))
+			if (file.DirectoryName != null && !Directory.Exists(file.DirectoryName))
 				Directory.CreateDirectory(file.DirectoryName);
-		
+
 
 			if (file.Exists)
 			{
 				Logger.Debug("Requested File already exists, attempting Rename...");
-				var baseName = string.Format("{0}{1}", newFileName.Replace(file.Extension, ""), " ~ ");
+				var baseName = $"{newFileName.Replace(file.Extension, "")}{" ~ "}";
 				var baseExt = file.Extension;
 
 				var i = 2;
 
 				for (; ; i++)
 				{
-					file = new FileInfo(string.Format("{0}{1}{2}", baseName, IntToStringWithPlaceHolders(i, 2), baseExt));
-					Logger.Debug(string.Format("{0}{1}", "Checking if Name Exists:  ".PadLeft(40), file.FullName));
+					file = new FileInfo($"{baseName}{IntToStringWithPlaceHolders(i, 2)}{baseExt}");
+					Logger.Debug($"{"Checking if Name Exists:  ".PadLeft(40)}{file.FullName}");
 					if (!file.Exists)
 						break;
 				}
@@ -96,7 +96,7 @@ namespace ProphetsWay.Utilities
 				newFileName = file.FullName;
 			}
 
-			Logger.Debug(string.Format("{0}{1}", "Valid Name Found:  ".PadLeft(40), newFileName));
+			Logger.Debug($"{"Valid Name Found:  ".PadLeft(40)}{newFileName}");
 			return newFileName;
 		}
 

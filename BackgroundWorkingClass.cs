@@ -28,7 +28,7 @@ namespace ProphetsWay.Utilities
 
 		public void AbortWork()
 		{
-			if(Working)
+			if (Working)
 			{
 				Logger.Info("Cancelling: " + _workName);
 				Cancel = true;
@@ -67,7 +67,7 @@ namespace ProphetsWay.Utilities
 		public int MaxProgress { get; private set; }
 	}
 
-	public class WorkStatusArgs :EventArgs
+	public class WorkStatusArgs : EventArgs
 	{
 		public WorkStatusArgs(string message)
 		{

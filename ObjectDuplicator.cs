@@ -11,8 +11,8 @@ namespace ProphetsWay.Utilities
 		public static T DuplicateObject<T>(this T original)
 			where T : new()
 		{
-			var type = typeof (T);
-			var copy = (T) Activator.CreateInstance(type, new object[] {});
+			var type = typeof(T);
+			var copy = (T)Activator.CreateInstance(type, new object[] { });
 
 			var properties = type.GetProperties();
 

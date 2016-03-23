@@ -164,7 +164,7 @@ namespace ProphetsWay.Utilities
 
 		protected override void LogStatement(string message, LogLevels level)
 		{
-			LoggingEvent.BeginInvoke(this, new LoggerArgs{LogLevel = level, Message = message}, EndAsyncLogEvent, null);
+			LoggingEvent.BeginInvoke(this, new LoggerArgs { LogLevel = level, Message = message }, EndAsyncLogEvent, null);
 		}
 
 		private static void EndAsyncLogEvent(IAsyncResult iar)
@@ -177,12 +177,11 @@ namespace ProphetsWay.Utilities
 
 			try
 			{
-				if (invokedMethod != null)
-					invokedMethod.EndInvoke(iar);
+				invokedMethod?.EndInvoke(iar);
 			}
 			catch
 			{
-				
+				// ignored
 			}
 		}
 

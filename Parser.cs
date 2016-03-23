@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -43,7 +42,7 @@ namespace ProphetsWay.Utilities
 			if (string.IsNullOrEmpty(type))
 			{
 				result = default(T);
-				return;				
+				return;
 			}
 
 			var typeFixed = type.Replace(' ', '_');

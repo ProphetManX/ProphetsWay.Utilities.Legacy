@@ -33,7 +33,7 @@ namespace ProphetsWay.Utilities
 
 	public static class HashUtility
 	{
-		private const int BUFFER_SIZE = 32*1024*1024;
+		private const int BUFFER_SIZE = 32 * 1024 * 1024;
 
 		private const string INVALID_HASH_TYPE = @"Improper value of HashType was used.";
 
@@ -230,12 +230,11 @@ namespace ProphetsWay.Utilities
 				}
 				catch (Exception ex)
 				{
-					Logger.Error(ex, string.Format("Error when trying to compute a [{0}] hash on a Stream.", _hashType));
+					Logger.Error(ex, $"Error when trying to compute a [{_hashType}] hash on a Stream.");
 				}
 				finally
 				{
-					if (stream != null)
-						stream.Close();
+					stream?.Close();
 				}
 			}
 
@@ -290,7 +289,7 @@ namespace ProphetsWay.Utilities
 
 		private static void ReadStreamIntoBuffer(object args)
 		{
-			var tArgs = (ReadStreamIntoBufferArgs) args;
+			var tArgs = (ReadStreamIntoBufferArgs)args;
 			int bufferLength;
 
 			do
