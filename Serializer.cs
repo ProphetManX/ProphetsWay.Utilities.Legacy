@@ -9,11 +9,13 @@ namespace ProphetsWay.Utilities
 	{
 		public static void SerializeAsToFile(this object objectToSerialize, string targetFileName)
 		{
-			var s = File.Open(targetFileName, FileMode.Create);
-
-			objectToSerialize.SerializeAsByteArr().WriteTo(s);
-			s.Flush();
-			s.Close();
+			using (var ms = objectToSerialize.SerializeAsByteArr())
+			using (var s = File.Open(targetFileName, FileMode.Create))
+			{
+				ms.WriteTo(s);
+				s.Flush();
+				s.Close();
+			}
 		}
 
 		public static string SerializeAsXml(this object objectToSerialize)
@@ -55,8 +57,10 @@ namespace ProphetsWay.Utilities
 
 		public static T DeserializeFromFile<T>(string targetFileName)
 		{
-			var s = File.Open(targetFileName, FileMode.Open);
-			var obj = s.DeserializeFromByteArr<T>();
+			T obj;
+
+			using (var s = File.Open(targetFileName, FileMode.Open))
+				obj = s.DeserializeFromByteArr<T>();
 
 			return obj;
 		}

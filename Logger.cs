@@ -244,6 +244,7 @@ namespace ProphetsWay.Utilities
 	{
 		private readonly string _source;
 		private const string WINDOWS_EVENT_VIEW_LOG_NAME = "Application";
+		private readonly bool _valid = false;
 
 		public EventLogDestination() : this(null, LogLevels.Debug)
 		{
@@ -274,6 +275,8 @@ namespace ProphetsWay.Utilities
 
 				if (!EventLog.SourceExists(_source))
 					EventLog.CreateEventSource(_source, WINDOWS_EVENT_VIEW_LOG_NAME);
+
+				_valid = true;
 			}
 			catch (Exception)
 			{
@@ -283,6 +286,9 @@ namespace ProphetsWay.Utilities
 
 		protected override void LogStatement(string message, LogLevels level)
 		{
+			if (!_valid)
+				return;
+
 			EventLogEntryType type;
 
 			switch (level)
