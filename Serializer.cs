@@ -3,11 +3,10 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
-using Newtonsoft.Json;
 
 namespace ProphetsWay.Utilities
 {
-	public static class Serializer
+	public static class Serializer 
 	{
 		public static void SerializeAsToFile(this object objectToSerialize, string targetFileName)
 		{
@@ -49,17 +48,6 @@ namespace ProphetsWay.Utilities
 
 			return s;
 		}
-
-		public static string SerializeAsJSON(this object objectToSerialize)
-		{
-			return JsonConvert.SerializeObject(objectToSerialize);
-		}
-
-		public static T DeserializeFromJSON<T>(this string jsonText)
-		{
-			return JsonConvert.DeserializeObject<T>(jsonText);
-		}
-
 		public static T DeserializeFromXml<T>(this XmlDocument xmlDocument)
 		{
 			var xmlBytes = xmlDocument.OuterXml.SerializeAsByteArr();
@@ -85,23 +73,6 @@ namespace ProphetsWay.Utilities
 			var obj = (T)formatter.Deserialize(binaryStream);
 			binaryStream.Close();
 
-			return obj;
-		}
-
-		public static MemoryStream SerializeAsProtobuf(this object objectToSerialize)
-		{
-			var s = new MemoryStream();
-			ProtoBuf.Serializer.Serialize(s, objectToSerialize);
-
-			s.Flush();
-			s.Position = 0;
-
-			return s;
-		}
-
-		public static T DeserializeFromProtobuf<T>(this Stream protoStream)
-		{
-			var obj = ProtoBuf.Serializer.Deserialize<T>(protoStream);
 			return obj;
 		}
 
