@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace ProphetsWay.Utilities
 {
@@ -33,48 +34,44 @@ namespace ProphetsWay.Utilities
 
 	public static class HashUtility
 	{
-		private const int BUFFER_SIZE = 32 * 1024 * 1024;
+		private const int BUFFER_SIZE = 1024*1024*128;
 
 		private const string INVALID_HASH_TYPE = @"Improper value of HashType was used.";
 
-		public static HashCollection GenerateHashes(this Stream stream)
-		{
-			var buffer = new byte[BUFFER_SIZE];
+		//public static HashCollection GenerateHashes(this Stream stream)
+		//{
+		//	var buffer = new byte[BUFFER_SIZE];
 
-			var md5Worker = new HashWorker(HashTypes.MD5);
-			var sha1Worker = new HashWorker(HashTypes.SHA1);
-			var sha256Worker = new HashWorker(HashTypes.SHA256);
-			var sha512Worker = new HashWorker(HashTypes.SHA512);
-
-
-			//event here to setup progressbar length
-
-			//var max = (int)(stream.Length / buffer.Length);
-
-			//var x = new ComputerInfo();
-			//var y = x.TotalPhysicalMemory;
-			int bufferLength;
-
-			do
-			{
-				bufferLength = stream.Read(buffer, 0, buffer.Length);
-				//max--;
-
-				//process the buffer here...
-				md5Worker.GenerateIncrementalHash(buffer, bufferLength);
-				sha1Worker.GenerateIncrementalHash(buffer, bufferLength);
-				sha256Worker.GenerateIncrementalHash(buffer, bufferLength);
-				sha512Worker.GenerateIncrementalHash(buffer, bufferLength);
-
-			} while (bufferLength > 0);
-
-			stream.Close();
+		//	var md5Worker = new HashWorker(HashTypes.MD5);
+		//	var sha1Worker = new HashWorker(HashTypes.SHA1);
+		//	var sha256Worker = new HashWorker(HashTypes.SHA256);
+		//	var sha512Worker = new HashWorker(HashTypes.SHA512);
 
 
+		//	//event here to setup progressbar length
 
-			var ret = new HashCollection(md5Worker.Hash, sha1Worker.Hash, sha256Worker.Hash, sha512Worker.Hash);
-			return ret;
-		}
+		//	//var max = (int)(stream.Length / buffer.Length);
+
+		//	//var x = new ComputerInfo();
+		//	//var y = x.TotalPhysicalMemory;
+		//	int bufferLength;
+
+		//	do
+		//	{
+		//		bufferLength = stream.Read(buffer, 0, buffer.Length);
+		//		//max--;
+
+		//		//process the buffer here...
+		//		md5Worker.GenerateIncrementalHash(buffer, bufferLength);
+		//		sha1Worker.GenerateIncrementalHash(buffer, bufferLength);
+		//		sha256Worker.GenerateIncrementalHash(buffer, bufferLength);
+		//		sha512Worker.GenerateIncrementalHash(buffer, bufferLength);
+
+		//	} while (bufferLength > 0);
+
+		//	var ret = new HashCollection(md5Worker.Hash, sha1Worker.Hash, sha256Worker.Hash, sha512Worker.Hash);
+		//	return ret;
+		//}
 
 		public static string GenerateHash(this Stream stream, HashTypes hashType)
 		{
@@ -86,7 +83,7 @@ namespace ProphetsWay.Utilities
 
 		public static bool VerifyHash(this Stream stream, string hash, HashTypes hashType)
 		{
-			return string.Equals(hash, GenerateHash(stream, hashType));
+			return string.Equals(hash, GenerateHash(stream, hashType), StringComparison.OrdinalIgnoreCase);
 		}
 
 		public static bool VerifyHash(this FileInfo fileInfo, string hash, HashTypes hashType)
@@ -96,7 +93,7 @@ namespace ProphetsWay.Utilities
 
 		public static string GenerateHash(string fileName, HashTypes hashType)
 		{
-			return GenerateHash(new FileInfo(fileName).OpenRead(), hashType);
+			return GenerateHash(new FileInfo(fileName), hashType);
 		}
 
 		public static string GenerateHash(this FileInfo fileInfo, HashTypes hashType)
@@ -104,92 +101,122 @@ namespace ProphetsWay.Utilities
 			return GenerateHash(fileInfo.OpenRead(), hashType);
 		}
 
-		public static HashCollection GenerateHashesThreaded(this Stream stream)
+		public static HashCollection GenerateHashes(this Stream stream)
 		{
-			//I want 5 threads.
-			//1 thread to read the file in and put it into buffers
-			//4 other threads, 1 for each hash type, worker threads
-
-			//I need the worker threads to wait and read from the input buffer
-			//once all threads have read the buffer, clear the buffer's data (can leave the buffer item record)
-
-			const int bufferChunkSize = BUFFER_SIZE;
-			const int totalWorkers = 4;
-
+			var buffer = new byte[BUFFER_SIZE];
 			var md5Worker = new HashWorker(HashTypes.MD5);
 			var sha1Worker = new HashWorker(HashTypes.SHA1);
 			var sha256Worker = new HashWorker(HashTypes.SHA256);
 			var sha512Worker = new HashWorker(HashTypes.SHA512);
 
-			var args = new ReadStreamIntoBufferArgs
+
+			Task.Run(() =>
 			{
-				DataStream = stream,
-				BufferArraySize = bufferChunkSize,
-				SignOffsRequiredToClearBuffer = totalWorkers
-			};
+				var bRead = 0;
+				do
+				{
+					bRead = stream.Read(buffer, 0, buffer.Length);
 
-			Buffer = new List<BufferedData>();
+					var tasks = new List<Task>
+					{
+						Task.Run(() => md5Worker.GenerateIncrementalHash(buffer, bRead)),
+						Task.Run(() => sha1Worker.GenerateIncrementalHash(buffer, bRead)),
+						Task.Run(() => sha256Worker.GenerateIncrementalHash(buffer, bRead)),
+						Task.Run(() => sha512Worker.GenerateIncrementalHash(buffer, bRead))
+					};
 
-			var thBuf = new Thread(ReadStreamIntoBuffer);
-			thBuf.Start(args);
+					Task.WaitAll(tasks.ToArray());
+				} while (bRead > 0);
+			}).Wait();
 
-			md5Worker.GenerateThreadedHash();
-			sha1Worker.GenerateThreadedHash();
-			sha256Worker.GenerateThreadedHash();
-			sha512Worker.GenerateThreadedHash();
-
-
-			while (Buffer.Count == 0 || Buffer[Buffer.Count - 1].FinishedCount != totalWorkers)
-				Thread.Sleep(100);
 
 			var ret = new HashCollection(md5Worker.Hash, sha1Worker.Hash, sha256Worker.Hash, sha512Worker.Hash);
 			return ret;
 		}
 
-		private static List<BufferedData> Buffer { get; set; }
+		//public static HashCollection GenerateHashesThreaded(this Stream stream)
+		//{
+		//	//I want 5 threads.
+		//	//1 thread to read the file in and put it into buffers
+		//	//4 other threads, 1 for each hash type, worker threads
 
-		private class BufferedData
-		{
-			public BufferedData(byte[] bufferData, int bufferLength, int signOffsRequiredToDelete)
-			{
-				_signOffReq = signOffsRequiredToDelete;
-				_signOffCount = 0;
-				FinishedCount = 0;
+		//	//I need the worker threads to wait and read from the input buffer
+		//	//once all threads have read the buffer, clear the buffer's data (can leave the buffer item record)
 
-				Data = bufferData;
-				Length = bufferLength;
-			}
+		//	const int bufferChunkSize = BUFFER_SIZE;
+		//	const int totalWorkers = 4;
 
-			public byte[] Data { get; private set; }
+		//	var md5Worker = new HashWorker(HashTypes.MD5);
+		//	var sha1Worker = new HashWorker(HashTypes.SHA1);
+		//	var sha256Worker = new HashWorker(HashTypes.SHA256);
+		//	var sha512Worker = new HashWorker(HashTypes.SHA512);
 
-			public int Length { get; private set; }
+		//	var args = new ReadStreamIntoBufferArgs
+		//	{
+		//		DataStream = stream,
+		//		BufferArraySize = bufferChunkSize,
+		//		SignOffsRequiredToClearBuffer = totalWorkers
+		//	};
 
-			private readonly int _signOffReq;
-			private int _signOffCount;
+		//	Buffer = new List<BufferedData>();
 
-			public void SignOff()
-			{
-				_signOffCount++;
+		//	var thBuf = new Thread(ReadStreamIntoBuffer);
+		//	thBuf.Start(args);
 
-				if (_signOffCount >= _signOffReq)
-					Data = null;
-			}
+		//	md5Worker.GenerateThreadedHash();
+		//	sha1Worker.GenerateThreadedHash();
+		//	sha256Worker.GenerateThreadedHash();
+		//	sha512Worker.GenerateThreadedHash();
 
-			public int FinishedCount { get; private set; }
 
-			public void Finished()
-			{
-				FinishedCount++;
-			}
+		//	while (Buffer.Count == 0 || Buffer[Buffer.Count - 1].FinishedCount != totalWorkers)
+		//		Thread.Sleep(100);
 
-		}
+		//	var ret = new HashCollection(md5Worker.Hash, sha1Worker.Hash, sha256Worker.Hash, sha512Worker.Hash);
+		//	return ret;
+		//}
+
+		//private static List<BufferedData> Buffer { get; set; }
+
+		//private class BufferedData
+		//{
+		//	//public BufferedData(byte[] bufferData, int bufferLength, int signOffsRequiredToDelete)
+		//	//{
+		//	//	_signOffReq = signOffsRequiredToDelete;
+		//	//	_signOffCount = 0;
+		//	//	FinishedCount = 0;
+
+		//	//	Data = bufferData;
+		//	//	Length = bufferLength;
+		//	//}
+
+		//	public byte[] Data { get; private set; }
+
+		//	public int Length { get; private set; }
+
+		//	private readonly int _signOffReq;
+		//	private int _signOffCount;
+
+		//	public void SignOff()
+		//	{
+		//		_signOffCount++;
+
+		//		if (_signOffCount >= _signOffReq)
+		//			Data = null;
+		//	}
+
+		//	public int FinishedCount { get; private set; }
+
+		//	public void Finished()
+		//	{
+		//		FinishedCount++;
+		//	}
+
+		//}
 
 		private class HashWorker
 		{
-			public byte[] Hash
-			{
-				get { return Hasher.Hash; }
-			}
+			public byte[] Hash => Hasher.Hash;
 
 			private HashAlgorithm Hasher { get; set; }
 
@@ -232,10 +259,6 @@ namespace ProphetsWay.Utilities
 				{
 					Logger.Error(ex, $"Error when trying to compute a [{_hashType}] hash on a Stream.");
 				}
-				finally
-				{
-					stream?.Close();
-				}
 			}
 
 			public void GenerateIncrementalHash(byte[] inputBuffer, int bufferLength)
@@ -247,62 +270,60 @@ namespace ProphetsWay.Utilities
 			}
 
 
-			public void GenerateThreadedHash()
-			{
-				var th = new Thread(GenerateHashThreaded);
-				th.Start();
-			}
+			//public void GenerateThreadedHash()
+			//{
+			//	var th = new Thread(GenerateHashThreaded);
+			//	th.Start();
+			//}
 
-			private void GenerateHashThreaded()
-			{
-				int length;
-				var currChunk = 0;
+			//private void GenerateHashThreaded()
+			//{
+			//	int length;
+			//	var currChunk = 0;
 
-				do
-				{
-					while (Buffer.Count <= currChunk)
-					{
-						Thread.Sleep(10);
-					}
+			//	do
+			//	{
+			//		while (Buffer.Count <= currChunk)
+			//		{
+			//			Thread.Sleep(10);
+			//		}
 
-					var data = Buffer[currChunk].Data;
-					length = Buffer[currChunk].Length;
-					Buffer[currChunk].SignOff();
+			//		var data = Buffer[currChunk].Data;
+			//		length = Buffer[currChunk].Length;
+			//		Buffer[currChunk].SignOff();
 
-					GenerateIncrementalHash(data, length);
+			//		GenerateIncrementalHash(data, length);
 
-					Buffer[currChunk].Finished();
+			//		Buffer[currChunk].Finished();
 
-					currChunk++;
-				} while (length > 0);
-			}
+			//		currChunk++;
+			//	} while (length > 0);
+			//}
 		}
 
-		private class ReadStreamIntoBufferArgs
-		{
-			public int BufferArraySize { get; set; }
+		//private class ReadStreamIntoBufferArgs
+		//{
+		//	public int BufferArraySize { get; set; }
 
-			public Stream DataStream { get; set; }
+		//	public Stream DataStream { get; set; }
 
-			public int SignOffsRequiredToClearBuffer { get; set; }
-		}
+		//	public int SignOffsRequiredToClearBuffer { get; set; }
+		//}
 
-		private static void ReadStreamIntoBuffer(object args)
-		{
-			var tArgs = (ReadStreamIntoBufferArgs)args;
-			int bufferLength;
+		//private static void ReadStreamIntoBuffer(object args)
+		//{
+		//	var tArgs = (ReadStreamIntoBufferArgs)args;
+		//	int bufferLength;
 
-			do
-			{
-				var buffer = new byte[tArgs.BufferArraySize];
+		//	do
+		//	{
+		//		var buffer = new byte[tArgs.BufferArraySize];
 
-				bufferLength = tArgs.DataStream.Read(buffer, 0, buffer.Length);
-				Buffer.Add(new BufferedData(buffer, bufferLength, tArgs.SignOffsRequiredToClearBuffer));
+		//		bufferLength = tArgs.DataStream.Read(buffer, 0, buffer.Length);
+		//		Buffer.Add(new BufferedData(buffer, bufferLength, tArgs.SignOffsRequiredToClearBuffer));
 
-			} while (bufferLength > 0);
-
-			tArgs.DataStream.Close();
-		}
+		//	} while (bufferLength > 0);
+		//}
 
 	}
 }

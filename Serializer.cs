@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -29,6 +31,13 @@ namespace ProphetsWay.Utilities
 			return s.ToString();
 		}
 
+		public static MemoryStream SerializeAsByteArr(this string stringToSerialize)
+		{
+			var bytes = Encoding.UTF8.GetBytes(stringToSerialize);
+			var ms = new MemoryStream(bytes);
+			return ms;
+		}
+
 		public static MemoryStream SerializeAsByteArr(this object objectToSerialize)
 		{
 			var formatter = new BinaryFormatter();
@@ -41,19 +50,14 @@ namespace ProphetsWay.Utilities
 			return s;
 		}
 
-		/*
 		public static T DeserializeFromXml<T>(this XmlDocument xmlDocument)
 		{
+			var xmlBytes = xmlDocument.OuterXml.SerializeAsByteArr();
 			var formatter = new XmlSerializer(typeof(T));
-			XmlParserContext context = new XmlParserContext(xmlDocument.NameTable,);
-			var r = new XmlTextReader(xmlDocument.InnerXml, XmlNodeType.Document, )
-			var 
-
-			var obj = (T)formatter.Deserialize(r);
+			var obj = (T)formatter.Deserialize(xmlBytes);
 
 			return obj;
 		}
-		//*/
 
 		public static T DeserializeFromFile<T>(string targetFileName)
 		{
@@ -90,29 +94,6 @@ namespace ProphetsWay.Utilities
 			var obj = ProtoBuf.Serializer.Deserialize<T>(protoStream);
 			return obj;
 		}
-
-		/*
-		public void SerializeObject(string filename, ObjectToSerialize objectToSerialize)
-		{
-			Stream stream = File.Open(filename, FileMode.Create);
-			BinaryFormatter bFormatter = new BinaryFormatter();
-			bFormatter.Serialize(stream, objectToSerialize);
-			stream.Close();
-		}
-
-		public ObjectToSerialize DeSerializeObject(string filename)
-		{
-			ObjectToSerialize objectToSerialize;
-			Stream stream = File.Open(filename, FileMode.Open);
-			BinaryFormatter bFormatter = new BinaryFormatter();
-			objectToSerialize = (ObjectToSerialize)bFormatter.Deserialize(stream);
-			stream.Close();
-			return objectToSerialize;
-		}
-		//*/
-
-
-
 
 	}
 }
