@@ -1,9 +1,9 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace ProphetsWay.Utilities
 {
@@ -48,6 +48,16 @@ namespace ProphetsWay.Utilities
 			s.Position = 0;
 
 			return s;
+		}
+
+		public static string SerializeAsJSON(this object objectToSerialize)
+		{
+			return JsonConvert.SerializeObject(objectToSerialize);
+		}
+
+		public static T DeserializeFromJSON<T>(this string jsonText)
+		{
+			return JsonConvert.DeserializeObject<T>(jsonText);
 		}
 
 		public static T DeserializeFromXml<T>(this XmlDocument xmlDocument)
