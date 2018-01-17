@@ -172,6 +172,9 @@ namespace ProphetsWay.Utilities
 			{
 				if (_fi.Exists && clearFile)
 					_fi.Delete();
+
+                if(!(_fi.Directory?.Exists).GetValueOrDefault())
+                    _fi.Directory?.Create();
 			}
 			catch (Exception ex)
 			{
