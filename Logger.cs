@@ -185,18 +185,19 @@ namespace ProphetsWay.Utilities
 
 		private FileInfo _fi;
 
-		protected override void LogStatement(string message)
-		{
-			using (var sr = _fi.Open(FileMode.OpenOrCreate, FileAccess.Write))
-			{
-				var msgBytes = message.SerializeAsByteArr();
-				lock (LoggerLock)
-				{
-					msgBytes.WriteTo(sr);
-					sr.Flush();
-				}
-			}
-		}
+	    protected override void LogStatement(string message)
+	    {
+	        message += Environment.NewLine;
+	        var msgBytes = message.SerializeAsByteArr();
+
+	        lock (LoggerLock)
+	            using (var sr = _fi.Open(FileMode.OpenOrCreate, FileAccess.Write))
+	            {
+	                sr.Position = sr.Length;
+	                msgBytes.WriteTo(sr);
+	                sr.Flush();
+	            }
+	    }
 
 	}
 
