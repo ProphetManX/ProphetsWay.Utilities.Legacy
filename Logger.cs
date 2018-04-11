@@ -12,63 +12,100 @@ namespace ProphetsWay.Utilities
 		NoLogging = 0,
 		Error = 1,
 		Warning = 3,
-		Information = 7,
-		Debug = 15
+		Security = 7,
+		Information = 15,
+		Debug = 31
 	}
 
 	public static class Logger
 	{
-		private static readonly IList<LoggingDestination> _destinations = new List<LoggingDestination>();
+		private static readonly IList<LoggingDestination> Destinations = new List<LoggingDestination>();
 
 		public static void AddDestination(LoggingDestination newDest)
 		{
-			_destinations.Add(newDest);
+			Destinations.Add(newDest);
 		}
 
 		public static void ClearDestinations()
 		{
-			_destinations.Clear();
+			Destinations.Clear();
 		}
 
 		public static void Info(string message)
 		{
-			Log(message, LogLevels.Information);
+			Log(LogLevels.Information, message);
 		}
 
 		public static void Debug(string message)
 		{
-			Log(message, LogLevels.Debug);
+			Log(LogLevels.Debug, message);
 		}
 
 		public static void Error(Exception ex, string generalMessage = "")
 		{
-			string exMessage, exStackTrace;
-			ExceptionLogExtractor(ex, out exMessage, out exStackTrace);
-
-			Log($"{generalMessage}\r\n{exMessage}\r\n{exStackTrace}", LogLevels.Error);
+			Log(LogLevels.Error, generalMessage, ex);
 		}
 
 		public static void Warn(string message, Exception ex = null)
 		{
-			if (ex == null)
-				Log(message, LogLevels.Warning);
-			else
-			{
-				string exMessage, exStackTrace;
-				ExceptionLogExtractor(ex, out exMessage, out exStackTrace);
-
-				Log($"{message}\r\n{exMessage}\r\n{exStackTrace}", LogLevels.Warning);
-			}
+			Log(LogLevels.Warning, message, ex);
 		}
 
-		private static void Log(string message, LogLevels level)
+		public static void Log(LogLevels level, string message = null, Exception ex = null)
 		{
-			if (_destinations.Count == 0)
+			if (Destinations.Count == 0)
 				AddDestination(new EventLogDestination());
 
-			foreach (var dest in _destinations)
-				dest.Log(message, level);
+			foreach (var dest in Destinations)
+				dest.Log(level, message, ex);
 		}
+
+
+	}
+
+	public abstract class LoggingDestination
+	{
+		protected readonly object LoggerLock = new object();
+
+		private readonly LogLevels _reportingLevel;
+
+		protected LoggingDestination(LogLevels reportingLevel)
+		{
+			_reportingLevel = reportingLevel;
+		}
+
+		public void Log(LogLevels level, string message = null, Exception ex = null)
+		{
+			if ((level & _reportingLevel) < level)
+				return;
+
+			LogStatement(level, message, ex);
+		}
+
+		protected virtual void LogStatement(LogLevels level, string message = null, Exception ex = null)
+		{
+			string exMessage, exStackTrace;
+			switch (level)
+			{
+				case LogLevels.Error:
+					ExceptionLogExtractor(ex, out exMessage, out exStackTrace);
+					message = $"{message}\r\n{exMessage}\r\n{exStackTrace}";
+					break;
+
+				case LogLevels.Warning:
+					if (ex != null)
+					{
+						ExceptionLogExtractor(ex, out exMessage, out exStackTrace);
+						message = $"{message}\r\n{exMessage}\r\n{exStackTrace}";
+					}
+
+					break;
+			}
+
+			LogStatement(message, level);
+		}
+
+		protected abstract void LogStatement(string message, LogLevels level);
 
 		private static void ExceptionLogExtractor(Exception ex, out string message, out string stack)
 		{
@@ -86,28 +123,6 @@ namespace ProphetsWay.Utilities
 				? ex.StackTrace
 				: string.Format("{0}{1}{1}Inner Exception Stack Trace:{1}{2}", ex.StackTrace, Environment.NewLine, istack);
 		}
-	}
-
-	public abstract class LoggingDestination
-	{
-		protected readonly object LoggerLock = new object();
-
-		private readonly LogLevels _reportingLevel;
-
-		protected LoggingDestination(LogLevels reportingLevel)
-		{
-			_reportingLevel = reportingLevel;
-		}
-
-		public void Log(string message, LogLevels level)
-		{
-			if ((level & _reportingLevel) < level)
-				return;
-
-			LogStatement(message, level);
-		}
-
-		protected abstract void LogStatement(string message, LogLevels level);
 	}
 
 	public abstract class TextLogger : LoggingDestination
@@ -147,7 +162,7 @@ namespace ProphetsWay.Utilities
 
 		protected override void LogStatement(string message, LogLevels level)
 		{
-			LoggingEvent.Invoke(this, new LoggerArgs { LogLevel = level, Message = message });
+			LoggingEvent.Invoke(this, new LoggerArgs {LogLevel = level, Message = message});
 		}
 
 		public EventHandler<LoggerArgs> LoggingEvent;
@@ -173,8 +188,8 @@ namespace ProphetsWay.Utilities
 				if (_fi.Exists && clearFile)
 					_fi.Delete();
 
-                if(!(_fi.Directory?.Exists).GetValueOrDefault())
-                    _fi.Directory?.Create();
+				if (!(_fi.Directory?.Exists).GetValueOrDefault())
+					_fi.Directory?.Create();
 			}
 			catch (Exception ex)
 			{
@@ -183,21 +198,21 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
-		private FileInfo _fi;
+		private readonly FileInfo _fi;
 
-	    protected override void LogStatement(string message)
-	    {
-	        message += Environment.NewLine;
-	        var msgBytes = message.SerializeAsByteArr();
+		protected override void LogStatement(string message)
+		{
+			message += Environment.NewLine;
+			var msgBytes = message.SerializeAsByteArr();
 
-	        lock (LoggerLock)
-	            using (var sr = _fi.Open(FileMode.OpenOrCreate, FileAccess.Write))
-	            {
-	                sr.Position = sr.Length;
-	                msgBytes.WriteTo(sr);
-	                sr.Flush();
-	            }
-	    }
+			lock (LoggerLock)
+				using (var sr = _fi.Open(FileMode.OpenOrCreate, FileAccess.Write))
+				{
+					sr.Position = sr.Length;
+					msgBytes.WriteTo(sr);
+					sr.Flush();
+				}
+		}
 
 	}
 
