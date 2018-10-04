@@ -56,10 +56,12 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
-		public static void CopyWithUniqueName(this FileInfo fileInfo, string requestedFullName)
+		public static string CopyWithUniqueName(this FileInfo fileInfo, string requestedFullName)
 		{
 			var newName = CheckAndRenameFile(requestedFullName);
 			fileInfo.CopyFast(newName);
+
+			return newName;
 		}
 
 		/// <summary>
